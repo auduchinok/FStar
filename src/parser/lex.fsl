@@ -31,6 +31,7 @@ let string_trim_both s n m = Util.substring s n (String.length s - (n+m))
 let trim_both   lexbuf n m = string_trim_both (ulexeme lexbuf) n m
 let trim_right  lexbuf n = trim_both lexbuf 0 n
 let trim_left   lexbuf n = trim_both lexbuf n 0
+let mutable blockCommentStartPos = Microsoft.FSharp.Text.Lexing.Position.Empty
 
 let fail lexbuf msg dflt =
      let m = getLexerRange lexbuf in 
@@ -370,7 +371,8 @@ rule token args = parse
  | "|)"             { LENS_PAREN_RIGHT }
 
  | "(*"
-     { let m = getLexerRange  lexbuf in 
+     { let m = getLexerRange  lexbuf in
+	   blockCommentStartPos <- lexbuf.StartPos; 
        comment(1,m,args) lexbuf }
 
  | '"' 
@@ -395,7 +397,7 @@ rule token args = parse
      }
 
  | "//"  [^'\n''\r']* 
-     { token args lexbuf  }
+     { LINE_COMMENT }
 
  | newline 
      { mknewline 1 lexbuf; 
@@ -595,7 +597,7 @@ and comment cargs = parse
     { 
       let n,m,args = cargs in 
       if n > 1 then comment (n-1,m,args) lexbuf 
-      else token args lexbuf }
+      else (lexbuf.StartPos <- blockCommentStartPos; COMMENT) }
       
  | [^ '\'' '(' '*' '\n' '\r' '"' ')' '@' ]+  
     { 
