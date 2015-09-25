@@ -33,6 +33,8 @@ let trim_right  lexbuf n = trim_both lexbuf 0 n
 let trim_left   lexbuf n = trim_both lexbuf n 0
 let mutable blockCommentStartPos = Microsoft.FSharp.Text.Lexing.Position.Empty
 
+exception BlockCommentUnclosed
+
 let fail lexbuf msg dflt =
      let m = getLexerRange lexbuf in 
      errorR(Absyn.Syntax.Error(msg,m));
@@ -373,7 +375,7 @@ rule token args = parse
  | "(*"
      { let m = getLexerRange  lexbuf in
 	   blockCommentStartPos <- lexbuf.StartPos; 
-       comment(1,m,args) lexbuf }
+       comment(1,m,args) lexbuf}
 
  | '"' 
      { let buf,fin,m = start_string lexbuf in 
@@ -606,7 +608,9 @@ and comment cargs = parse
     
  | eof 
      { let n,m,args = cargs in 
-       EOF }
+       if n > 0
+	   then raise BlockCommentUnclosed
+	   else EOF }
      
  | _ { let n,m,args = cargs in 
        comment(n,m,args) lexbuf }
