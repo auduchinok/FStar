@@ -4,7 +4,7 @@ all: ../../bin/parse.exe
 	fsc --define:TEST -g -r ../../bin/FSharp.PowerPack.dll -r ../../bin/FSharp.PowerPack.Compatibility.dll -r ../../bin/basic.dll -r ../../bin/absyn.dll --mlcompatibility $^ -o $@
 
 parse.fs: parse.fsy
-	fsyacc --module Microsoft.FStar.Parser.Parse $^
+	fsyacc --module FStar.Parser.Parse $^
 
 lex.fs: lex.fsl
 	fslex --unicode $^
