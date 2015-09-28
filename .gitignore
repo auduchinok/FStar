@@ -48,3 +48,7 @@ dump
 *.a
 *.cmxa
 *.so
+
+src/**/bin/**/*.pdb
+src/**/bin/**/*.dll
+src/**/bin/**/*.xml
