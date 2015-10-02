@@ -23,13 +23,19 @@ open FStar.Getopt
 open FStar.Tc.Util
 open FStar.Tc.Env
 
-let process_args () =
-  let file_list = Util.mk_ref [] in
-  let res = Getopt.parse_cmdline (Options.specs()) (fun i -> file_list := !file_list @ [i]) in
+let process_args_common processor =
+    let file_list = Util.mk_ref [] in
+    let res = processor (Options.specs()) (fun i -> file_list := !file_list @ [i]) in
     (match res with
        | GoOn -> ignore (Options.set_fstar_home ())
        | _ -> ());
-    (res, !file_list)
+    (res, !file_list)       
+
+let process_args () =
+    process_args_common Getopt.parse_cmdline
+  
+let process_args_string str =
+    process_args_common (fun opt f -> Getopt.parse_string opt f str)
 
 let cleanup () = Util.kill_all ()
 
@@ -265,10 +271,8 @@ let codegen fmods env=
         List.iter (fun (n,d) -> Util.write_file (Options.prependOutputDir (n^ext)) (FSharp.Format.pretty 120 d)) newDocs
     end
 
-(* Main function *)
-let go _ =
-  let (res, filenames) = process_args () in
-  match res with
+let processing res filenames =
+    match res with
     | Help ->
       Options.display_usage (Options.specs())
     | Die msg ->
@@ -289,6 +293,15 @@ let go _ =
                 finished_message fmods
              end
 
+
+(* Main function *)
+let go () =
+  let (res, filenames) = process_args () in
+  processing res filenames
+  
+let goInternal str =
+    let (res, filenames) = process_args_string str in
+  processing res filenames
 
 let main () =
     try
