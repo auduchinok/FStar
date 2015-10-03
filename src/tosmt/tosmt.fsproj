@@ -39,10 +39,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FSharp.PowerPack">
-      <HintPath>..\..\3rdparty\FSharp.PowerPack\FSharp.PowerPack.dll</HintPath>
+      <HintPath>..\..\3rdparty_lib\FSharp.PowerPack\FSharp.PowerPack.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.PowerPack.Compatibility">
-      <HintPath>..\..\3rdparty\FSharp.PowerPack\FSharp.PowerPack.Compatibility.dll</HintPath>
+      <HintPath>..\..\3rdparty_lib\FSharp.PowerPack\FSharp.PowerPack.Compatibility.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
