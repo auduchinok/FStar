@@ -1,6 +1,6 @@
 (*--build-config
-    options:--admit_fsi FStar.Set;
-    other-files:set.fsi heap.fst st.fst all.fst
+    options:--admit_fsi FStar.Set --z3timeout 15;
+    other-files:set.fsi heap.fst st.fst all.fst st2.fst
 --*)
 
 module While
@@ -49,24 +49,32 @@ type com =
 | While  : cond:exp -> body:com -> variant:variant -> com
 
 
-(* Couldn't find a way of making F* accept a mutually recursive version of this *)
+(* function used for the decreases clause *)
+val decr : heap -> com -> Tot int 
+let decr h c = 
+  match c with 
+  | While c b v ->
+    interpret_exp h v
+  | _ ->   0
+
 (* Returns Some heap if the variant is correct *)
-val interpret_while : h:heap -> e:exp -> (body:heap -> Tot (option heap)) -> v:variant 
-  -> Tot (option heap) (decreases (interpret_exp h v))
-let rec interpret_while h e body v =
+val interpret_while : h:heap -> c:com{is_While c}
+  -> Tot (option heap) (decreases %[c; decr h c; 0])
+val interpret_com : h:heap -> c:com -> Tot (option heap) (decreases %[c; decr h c; 1])
+
+let rec interpret_while h (While e body v) =
   if interpret_exp h e = 0 then
     Some h
   else
-    match body h with
+    match interpret_com h body with
     | Some h' ->
       if interpret_exp h' v < interpret_exp h v then 
-        interpret_while h' e body v
+        interpret_com h' (While e body v)
       else
         None
     | None -> None
 
-val interpret_com : h:heap -> c:com -> Tot (option heap) (decreases c)
-let rec interpret_com h c = 
+and interpret_com h c = 
   match c with
   | Skip -> Some h
   | Assign x e -> 
@@ -81,7 +89,7 @@ let rec interpret_com h c =
       interpret_com h cf
     else
       interpret_com h ct
-  | While e body v -> interpret_while h e (fun h -> interpret_com h body) v
+  | While e body v -> interpret_while h c 
 
 
 val interpret_exp_st : e:exp -> ST int 
