@@ -55,7 +55,7 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
-  <Import Project="$(SolutionDir)\packages\FsLexYacc.6.0.3\bin\FsLexYacc.targets" Condition="Exists('$(SolutionDir)\packages\FsLexYacc.6.0.3\bin\FsLexYacc.targets')" />
+  <Import Project="$(SolutionDir)\packages\FsLexYacc\bin\FsLexYacc.targets" Condition="Exists('$(SolutionDir)\packages\FsLexYacc\bin\FsLexYacc.targets')" />
   <PropertyGroup>
     <PreBuildEvent>
     </PreBuildEvent>
