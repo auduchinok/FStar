@@ -17,7 +17,7 @@
 
 module FStar.Tcenv
 
-open Absyn
+open FStar.Absyn
 
 type binding =
   | Binding_var of ident * typ

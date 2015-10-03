@@ -38,22 +38,21 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FSharp.PowerPack">
-      <HintPath>..\..\bin\FSharp.PowerPack.dll</HintPath>
+      <HintPath>..\..\3rdparty\FSharp.PowerPack\FSharp.PowerPack.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.PowerPack.Compatibility">
-      <HintPath>..\..\bin\FSharp.PowerPack.Compatibility.dll</HintPath>
+      <HintPath>..\..\3rdparty\FSharp.PowerPack\FSharp.PowerPack.Compatibility.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.PPrint">
-      <HintPath>..\..\bin\FSharp.PPrint.dll</HintPath>
+      <HintPath>..\..\3rdparty\FSharp.PPrint\FSharp.PPrint.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-        <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>False</Private>
     </Reference>
-
   </ItemGroup>
   <ItemGroup>
     <Compile Include="format.fsi" />

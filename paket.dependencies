@@ -1,0 +1,11 @@
+source https://nuget.org/api/v2
+
+nuget FSharp.Formatting
+nuget FsLexYacc 6.0.3 framework: >= net45
+nuget Nuget.CommandLine
+nuget NUnit 
+nuget NUnit.Runners
+nuget FAKE
+nuget SourceLink.Fake
+
+github fsharp/FAKE modules/Octokit/Octokit.fsx

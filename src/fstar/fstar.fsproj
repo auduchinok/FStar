@@ -66,6 +66,7 @@
     <Compile Include="fstar.fs" />
     <Compile Include="main.fs" />
     <None Include="app.config" />
+    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\extraction\extraction.fsproj">
@@ -78,17 +79,14 @@
       <Project>{670da3f6-7e41-4c1d-ab17-1f59e0317f52}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <Reference Include="FSharp.PowerPack">
-      <HintPath>..\..\bin\FSharp.PowerPack.dll</HintPath>
-    </Reference>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>False</Private>
     </Reference>
-    <Reference Include="FSharp.PowerPack.Compatibility">
-      <HintPath>..\..\bin\FSharp.PowerPack.Compatibility.dll</HintPath>
+    <Reference Include="FSharp.PowerPack">
+      <HintPath>..\..\3rdparty\FSharp.PowerPack\FSharp.PowerPack.dll</HintPath>
     </Reference>
-    <Reference Include="FsLexYacc.Runtime">
-      <HintPath>..\VS\packages\FsLexYacc.Runtime.6.0.2\lib\net40\FsLexYacc.Runtime.dll</HintPath>
+    <Reference Include="FSharp.PowerPack.Compatibility">
+      <HintPath>..\..\3rdparty\FSharp.PowerPack\FSharp.PowerPack.Compatibility.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
