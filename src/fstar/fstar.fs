@@ -300,8 +300,9 @@ let go () =
   processing res filenames
   
 let goInternal str =
-    let (res, filenames) = process_args_string str in
-  processing res filenames
+        let (res, filenames) = process_args_string str in
+        processing res filenames
+   
 
 let main () =
     try
