@@ -300,11 +300,16 @@ let go () =
   processing res filenames
   
 let goInternal str =
+    Options.reset_options() ;
     let (res, filenames) = process_args_string str in
   processing res filenames
 
 let main () =
     try
+      printfn "First session";
+      go ();
+      cleanup ();
+      printfn "Second session";
       go ();
       cleanup ();
       exit 0
