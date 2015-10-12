@@ -2,7 +2,9 @@ language: csharp
 before_install:
   - git submodule update --init --recursive
   - chmod +x build.sh
-
+mono:
+  - 3.12.0
+  
 sudo: false  # use the new container-based Travis infrastructure 
 
 script: 
