@@ -65,11 +65,13 @@ let parse_file env fn =
 
     | Inl (Inr _) ->
       Util.fprint1 "%s: Expected a module\n" fn;
-      exit 1
+      failwith "!!!!!"
+      //exit 1
 
     | Inr (msg, r) ->
       Util.print_string <| Print.format_error r msg;
-      exit 1
+      failwith "!!!"     
+      //exit 1
 
 let read_build_config file = ParseIt.read_build_config file
 

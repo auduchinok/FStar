@@ -28,7 +28,7 @@
     <OtherFlags>--mlcompatibility</OtherFlags>
     <StartWorkingDirectory>
     </StartWorkingDirectory>
-    <StartArguments>C:\Users\User\VisualFStar\FStar\examples\hello\hello.fst</StartArguments>
+    <StartArguments>"C:\Users\User\Documents\Visual Studio 2015\Projects\FStarProject Application2\FStarProject Application2\Program.fst"</StartArguments>
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

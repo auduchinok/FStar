@@ -1,6 +1,8 @@
 ﻿#light "off"
 module FStar.Main
-//let _ = FStar.main ()
+let _ = 
+    FStar.main ()
+    //FStar.main ()
 
-let _ = FStar.goInternal @"C:\Users\User\VisualFStar\src\BuildTaskTest\Program1.fst"
+//do FStar.goInternal @"C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\ProjectTemplates\FStar\Program.fst"
 
