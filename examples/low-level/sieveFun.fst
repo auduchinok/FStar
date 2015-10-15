@@ -1,14 +1,14 @@
 (*--build-config
     other-files:ext.fst set.fsi set.fst heap.fst st.fst all.fst list.fst  stack.fst listset.fst
-    ghost.fst located.fst lref.fst stackAndHeap.fst sst.fst sstCombinators.fst
+    ghost.fst located.fst lref.fst stackAndHeap.fst sst.fst rstWhile.fst
   --*)
 
 module SieveFun
-open RSTCombinators
+open FStar.Regions.RSTWhile
 open StackAndHeap
-open RST
+open FStar.Regions.RST
 open Heap
-open Lref  open Located
+open FStar.Regions.Heap  open FStar.Regions.Located
 open Stack
 open Set
 open Prims

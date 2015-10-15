@@ -1,44 +1,31 @@
 include ../Makefile.include
 
-all: api sinterpreter tinterpreter theory codegen distclean
+all: api interpreter theory codegen distclean
+
+EXAMPLES_DIR=./examples
 
 api:
-	$(FSTAR) wysteria.fst
-	$(FSTAR) mill1.fst
-	$(FSTAR) mill2.fst
-	$(FSTAR) mill3.fst
-	$(FSTAR) mill4.fst
-	$(FSTAR) mill5.fst
-	$(FSTAR) gps.fst
-	$(FSTAR) median.fst
+	make -C examples api FSTAR=../$(FSTAR)
 
-sinterpreter:
-	$(FSTAR) sinterpreter.fst
-
-tinterpreter:
-	$(FSTAR) tinterpreter.fst
+interpreter:
+	$(FSTAR) interpreter.fst
 
 theory:
 	$(FSTAR) theory.fst
 
-OCAMLOPT=ocamlfind ocamlopt -thread -package batteries -linkpkg -g -w -8
+OUTPUT_DIR=./ocaml-output
 
 codegen:
-	$(FSTAR) --admit_fsi FStar.OrdSet --admit_fsi FStar.OrdMap --admit_fsi FStar.Set\
-	         --admit_fsi FFI --admit_fsi Runtime --admit_fsi FStar.IO --codegen OCaml\
-                 ghost.fst listTot.fst ordset.fsi ordmap.fsi classical.fst set.fsi heap.fst st.fst\
-                 all.fst io.fsti prins.fst ast.fst print.fst ffi.fsi sem.fst sinterpreter.fst runtime.fsi tinterpreter.fst\
-		 sec_server.fst main.fst
+	$(FSTAR) --admit_fsi FStar.Set\
+	         --admit_fsi Ffibridge --admit_fsi Runtime --admit_fsi Prog --codegen OCaml --admit_fsi FStar.IO --odir $(OUTPUT_DIR) --use_native_int\
+                 ghost.fst ext.fst listTot.fst set.fsi heap.fst st.fst all.fst list.fst listproperties.fst ordset.fsi ordset.fst ordmap.fsi ordmap.fst classical.fst \
+                 io.fsti string.fsi prins.fst ast.fst ffibridge.fsi sem.fst runtime.fsi print.fst interpreter.fst sec_server.fst examples/ffi.fst prog.fsi main.fst 
 
-a.out: codegen
-	cp $(FSTAR_HOME)/lib/ml/prims.ml .
-	cp $(FSTAR_HOME)/lib/ml/FStar_All.ml .
-	cp $(FSTAR_HOME)/lib/ml/FStar_ST.ml .
-	cp $(FSTAR_HOME)/lib/ml/FStar_IO.ml .
-	$(OCAMLOPT) prims.ml FStar_ST.ml FStar_All.ml FStar_OrdSet.ml FStar_OrdMap.ml FStar_IO.ml \
-	            AST.ml Print.ml FFI.ml Semantics.ml SourceInterpreter.ml Runtime.ml TargetInterpreter.ml SecServer.ml Main.ml -o a.out
+a.out:
+	make -C $(OUTPUT_DIR) a.out
+
 clean:
-	rm -f *.cmi *.cmx *.o *.exe a.out 
+	make -C $(OUTPUT_DIR) clean
 
 distclean:
-	rm -f AST.ml prims.ml FStar_List_Tot.ml FStar_Ghost.ml FStar_All.ml FStar_Classical.ml FStar_Heap.ml FStar_ST.ml FStar_IO.ml Prins.ml Print.ml SecServer.ml TargetInterpreter.ml Semantics.ml SourceInterpreter.ml Main.ml *.cmi *.cmx *.o *.exe a.out 
+	make -C $(OUTPUT_DIR) distclean

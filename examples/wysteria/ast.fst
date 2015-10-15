@@ -21,50 +21,36 @@ type const =
   | C_eprins: c:eprins -> const
   | C_prins : c:prins  -> const
 
-  | C_unit : const
-  | C_nat  : c:nat  -> const
-  | C_bool : c:bool -> const
+  | C_unit  : c:unit -> const
+  | C_bool  : c:bool -> const
 
-type exp' =
-  | E_aspar     : ps:exp -> e:exp -> exp'
-  | E_assec     : ps:exp -> e:exp -> exp'
-  | E_box       : ps:exp -> e:exp -> exp'
-  | E_unbox     : e:exp  -> exp'
-  | E_mkwire    : e1:exp -> e2:exp -> exp'
-  | E_projwire  : e1:exp -> e2:exp -> exp'
-  | E_concatwire: e1:exp -> e2:exp -> exp'
+  | C_opaque: c:'a -> const
 
-  | E_const     : c:const -> exp'
-  | E_var       : x:varname -> exp'
-  | E_let       : x:varname -> e1:exp -> e2:exp -> exp'
-  | E_abs       : x:varname -> e:exp -> exp'
-  | E_fix       : f:varname -> x:varname -> e:exp -> exp'
-  | E_empabs    : x:varname -> e:exp -> exp'
-  | E_app       : e1:exp -> e2:exp -> exp'
-  | E_ffi       : fn:string -> args:list exp -> exp'
-  | E_match     : e:exp -> pats:list (pat * exp) -> exp'
+type exp =
+  | E_aspar     : ps:exp -> e:exp -> exp
+  | E_assec     : ps:exp -> e:exp -> exp
+  | E_box       : ps:exp -> e:exp -> exp
+  | E_unbox     : e:exp  -> exp
+  | E_mkwire    : e1:exp -> e2:exp -> exp
+  | E_projwire  : e1:exp -> e2:exp -> exp
+  | E_concatwire: e1:exp -> e2:exp -> exp
 
-and pat =
-  | P_const: c:const -> pat
-
-and exp =
-  | Exp: e:exp' -> info:option other_info -> exp
+  | E_const     : c:const -> exp
+  | E_var       : x:varname -> exp
+  | E_let       : x:varname -> e1:exp -> e2:exp -> exp
+  | E_abs       : x:varname -> e:exp -> exp
+  | E_fix       : f:varname -> x:varname -> e:exp -> exp
+  | E_empabs    : x:varname -> e:exp -> exp
+  | E_app       : e1:exp -> e2:exp -> exp
+  | E_ffi       : n:nat -> fn:'a -> args:list exp -> inj:'b -> exp
+  | E_cond      : e:exp -> e1:exp -> e2:exp -> exp
 
 type canbox = | Can_b | Cannot_b
 
 type canwire = | Can_w | Cannot_w
 
-(*val canbox_const: c:const -> Tot canbox
-let canbox_const c = match c with
-  | C_prin _
-  | C_prins _ -> Cannot_b
-  
-  | C_unit
-  | C_nat _
-  | C_bool _  -> Can_b*)
-
 type v_meta =
-  | Meta: vps:eprins -> cb:canbox -> wps:eprins -> cw:canwire -> v_meta
+  | Meta: bps:eprins -> cb:canbox -> wps:eprins -> cw:canwire -> v_meta
 
 val is_meta_wireable: meta:v_meta -> Tot bool
 let is_meta_wireable = function
@@ -77,7 +63,17 @@ let is_meta_boxable ps = function
   | _                     -> false
 
 type value: v_meta -> Type =
-  | V_const   : c:const -> value (Meta empty Can_b empty Can_w)
+  | V_prin    : c:prin -> value (Meta empty Can_b empty Can_w)
+  | V_eprins  : c:eprins -> value (Meta empty Can_b empty Can_w)
+  | V_prins   : c:prins -> value (Meta empty Can_b empty Can_w)
+
+  | V_unit    : value (Meta empty Can_b empty Can_w)
+  | V_bool    : c:bool -> value (Meta empty Can_b empty Can_w)
+
+  | V_opaque  : v:'a -> meta:v_meta
+                -> slice_fn:(prin -> 'a -> Tot 'a) -> compose_fn:('a -> 'a -> Tot 'a)
+		-> slice_fn_sps:(prins -> 'a -> Tot 'a)
+		-> value meta
 
   | V_box     : #meta:v_meta -> ps:prins -> v:value meta{is_meta_boxable ps meta}
                 -> value (Meta ps Can_b (Meta.wps meta) Cannot_w)
@@ -132,8 +128,8 @@ type redex =
   | R_let       : #meta:v_meta -> x:varname -> v:value meta -> e:exp -> redex
   | R_app       : #meta1:v_meta -> #meta2:v_meta -> v1:value meta1 -> v2:value meta2
                   -> redex
-  | R_ffi       : fn:string -> args:list dvalue -> redex
-  | R_match     : #meta:v_meta -> v:value meta -> pats:list (pat * exp) -> redex
+  | R_ffi       : n:nat -> fn:'a -> args:list dvalue -> inj:'b -> redex
+  | R_cond      : #meta:v_meta -> v:value meta -> e1:exp -> e2:exp -> redex
 
 val empty_env: env
 let empty_env = fun _ -> None
@@ -167,8 +163,8 @@ type frame' =
   | F_let          : x:varname -> e2:exp -> frame'
   | F_app_e1       : e2:exp -> frame'
   | F_app_e2       : #meta:v_meta -> v:value meta -> frame'
-  | F_ffi          : fn:string -> es:list exp -> vs:list dvalue -> frame'
-  | F_match        : pats:list (pat * exp) -> frame'
+  | F_ffi          : n:nat -> fn:'a -> es:list exp -> vs:list dvalue -> inj:'b -> frame'
+  | F_cond         : e1:exp -> e2:exp -> frame'
 
 type frame =
   | Frame: m:mode -> en:env -> f:frame'-> tr:erased trace -> frame
@@ -192,7 +188,7 @@ val m_of_mode: mode -> Tot as_mode
 let m_of_mode (Mode m _) = m
 
 type mode_inv (m:mode) (l:level) =
-  (is_Target l /\ m_of_mode m = Par) ==> is_singleton (Mode.ps m)
+  (is_Target l /\ m_of_mode m = Par) ==> (size (Mode.ps m) = 1)
 
 val is_sec_frame: f':frame' -> Tot bool
 let is_sec_frame f' =
@@ -272,24 +268,24 @@ let is_value c = is_T_val (t_of_conf c)
 
 val is_value_ps: c:config -> Tot bool
 let is_value_ps c = match c with
-  | Conf _ _ _ _ (T_val (V_const (C_prins _))) _ -> true
-  | _                                            -> false
+  | Conf _ _ _ _ (T_val (V_prins _)) _ -> true
+  | _                                  -> false
 
 val is_value_p: c:config -> Tot bool
 let is_value_p c = match c with
-  | Conf _ _ _ _ (T_val (V_const (C_prin _))) _ -> true
-  | _                                           -> false
+  | Conf _ _ _ _ (T_val (V_prin _)) _ -> true
+  | _                                 -> false
 
 val c_value: c:config{is_value c} -> Tot dvalue
 let c_value (Conf _ _ _ _ (T_val #meta v) _) = D_v meta v
 
 val c_value_ps: c:config{is_value_ps c} -> Tot prins
 let c_value_ps c = match c with
-  | Conf _ _ _ _ (T_val (V_const (C_prins ps))) _ -> ps
+  | Conf _ _ _ _ (T_val (V_prins ps)) _ -> ps
 
 val c_value_p: c:config{is_value_p c} -> Tot prin
 let c_value_p c = match c with
-  | Conf _ _ _ _ (T_val (V_const (C_prin p))) _ -> p
+  | Conf _ _ _ _ (T_val (V_prin p)) _ -> p
 
 (* TODO: FIXME: workaround for projectors *)
 val m_of_conf: config-> Tot mode
@@ -318,3 +314,56 @@ let get_en_b #meta v = match v with
 
 val is_terminal: config -> Tot bool
 let is_terminal (Conf _ (Mode as_m _) s _ t _) = as_m = Par && s = [] && is_T_val t
+
+//-----//
+
+opaque val mk_aspar: exp -> exp -> Tot exp
+let mk_aspar ps e = E_aspar ps e
+
+opaque val mk_assec: exp -> exp -> Tot exp
+let mk_assec ps e = E_assec ps e
+
+opaque val mk_box: exp -> exp -> Tot exp
+let mk_box ps e = E_box ps e
+
+opaque val mk_unbox: exp -> Tot exp
+let mk_unbox e = E_unbox e
+
+opaque val mk_mkwire: exp -> exp -> Tot exp
+let mk_mkwire e1 e2 = E_mkwire e1 e2
+
+opaque val mk_projwire: exp -> exp -> Tot exp
+let mk_projwire e1 e2 = E_projwire e1 e2
+
+opaque val mk_concatwire: exp -> exp -> Tot exp
+let mk_concatwire e1 e2 = E_concatwire e1 e2
+
+opaque val mk_const: const -> Tot exp
+let mk_const c = E_const c
+
+opaque val mk_var: varname -> Tot exp
+let mk_var x = E_var x
+
+opaque val mk_let: varname -> exp -> exp -> Tot exp
+let mk_let x e1 e2 = E_let x e1 e2
+
+opaque val mk_abs: varname -> exp -> Tot exp
+let mk_abs x e = E_abs x e
+
+opaque val mk_fix: varname -> varname -> exp -> Tot exp
+let mk_fix f x e = E_fix f x e
+
+opaque val mk_empabs: varname -> exp -> Tot exp
+let mk_empabs x e = E_empabs x e
+
+opaque val mk_app: exp -> exp -> Tot exp
+let mk_app e1 e2 = E_app e1 e2
+
+opaque val mk_ffi: nat -> 'a -> list exp -> 'b -> Tot exp
+let mk_ffi n a l b = E_ffi n a l b
+
+opaque val mk_cond: exp -> exp -> exp -> Tot exp
+let mk_cond e e1 e2 = E_cond e e1 e2
+
+opaque val mk_v_opaque: 'a -> (prin -> 'a -> Tot 'a) -> ('a -> 'a -> Tot 'a) -> (prins -> 'a -> Tot 'a) -> Tot dvalue
+let mk_v_opaque v s c sps = D_v (Meta empty Can_b empty Can_w) (V_opaque v (Meta empty Can_b empty Can_w) s c sps)
