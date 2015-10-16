@@ -191,7 +191,7 @@ let ident = ident_start_char ident_char*
 let tvar = '\'' (ident_start_char | constructor_start_char) tvar_char*
 let tvar_alt = constructor_start_char+
 
-rule token args = parse
+rule token args skip = parse
  | ident 
      { Lexhelp.kwd_or_id args (getLexerRange lexbuf) (ulexeme lexbuf) }
  | constructor
@@ -207,7 +207,7 @@ rule token args = parse
  | '#' ' ' (digit)*
      { let n = Util.int_of_string (trim_left lexbuf 2) in
 	   mknewline (n - !lc) lexbuf; 
-       cpp_filename args lexbuf }
+       cpp_filename args skip lexbuf }
  | int8 
      { let n = trim_to_i32 lexbuf 1 in 
        if n > 0x80 || n < -0x80 then fail lexbuf "This number is outside the allowable range for 8-bit signed integers" (INT8(0y,false))
@@ -375,35 +375,35 @@ rule token args = parse
  | "(*"
      { let m = getLexerRange  lexbuf in
 	   blockCommentStartPos <- lexbuf.StartPos; 
-       comment(1,m,args) lexbuf}
+       comment(1,m,args) skip lexbuf}
 
  | '"' 
      { let buf,fin,m = start_string lexbuf in 
-       string (buf,fin,m,args) lexbuf }
+       string (buf,fin,m,args) skip lexbuf }
       
  | '"' 
      { let buf,fin,m = start_string lexbuf in 
-       vstring (buf,fin,m,args) lexbuf }
+       vstring (buf,fin,m,args) skip lexbuf }
 
  | truewhite+  
-     { token args lexbuf }
+     { token args skip lexbuf }
 
  | offwhite+  
      { 
-       token args lexbuf 
+       token args skip lexbuf 
      }
 
  | "////"  [^'\n''\r']* 
      { (* 4+ slash are 1-line comments, online 3 slash are XMLDoc *)
-       token args lexbuf 
+       token args skip lexbuf 
      }
 
  | "//"  [^'\n''\r']* 
-     { LINE_COMMENT }
+     { if not skip then LINE_COMMENT else token args skip lexbuf}
 
  | newline 
      { mknewline 1 lexbuf; 
-       token args lexbuf }
+       token args skip lexbuf }
 
  | '`' '`' ([^'`' '\n' '\r' '\t'] | '`' [^'`''\n' '\r' '\t']) + '`' '`' 
      { IDENT (trim_both lexbuf 2 2) }
@@ -437,7 +437,7 @@ rule token args = parse
  | "[" { LBRACK }
  | "[|" { LBRACK_BAR }
  | "<" {  if is_typ_app args lexbuf then TYP_APP_LESS else CUSTOM_OP("<")  }
- | ">" {  if is_typ_app_gt () then TYP_APP_GREATER else custom_op_parser args lexbuf }
+ | ">" {  if is_typ_app_gt () then TYP_APP_GREATER else custom_op_parser args skip lexbuf }
  | "]"  { RBRACK }
  | "|]" { BAR_RBRACK }
  | "{" { LBRACE }
@@ -454,19 +454,19 @@ rule token args = parse
  | _ { unexpected_char lexbuf }     
  | eof { lc := 1; EOF }
 
-and custom_op_parser args = parse
+and custom_op_parser args skip = parse
  | custom_op_char * {CUSTOM_OP(">" ^  ulexeme lexbuf)}
 
-and string sargs = parse
+and string sargs skip = parse
  |  '\\' newline anywhite* 
     { let (buf,fin,m,args) = sargs in 
       mknewline 1 lexbuf; 
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
  |  escape_char
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_byte_char buf (Lexhelp.escape (lexeme lexbuf).[1]);
-      string sargs lexbuf } 
+      string sargs skip lexbuf } 
 
  | trigraph
     (* REVIEW: Disallow these in string sargs constants, at least if > 127, since then *)
@@ -474,25 +474,25 @@ and string sargs = parse
     { let (buf,fin,m,args) = sargs in 
       let s = ulexeme lexbuf in 
       Lexhelp.add_byte_char buf (Lexhelp.trigraph s.[1] s.[2] s.[3]);
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
  | hexgraph_short
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_unichar buf (int (Lexhelp.hexgraph_short (trim_left lexbuf 2)));
-      string sargs lexbuf  }
+      string sargs skip lexbuf  }
       
  | unicodegraph_short
     (* REVIEW: Disallow these in bytearray constants *)
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_unichar buf (int (Lexhelp.unicodegraph_short (trim_left lexbuf 2)));
-      string sargs lexbuf  }
+      string sargs skip lexbuf  }
      
  | unicodegraph_long
     { let (buf,fin,m,args) = sargs in 
       let hi,lo = Lexhelp.unicodegraph_long (trim_left lexbuf 2) in 
       (match hi with | None -> () | Some c -> Lexhelp.add_unichar buf (int c));
       Lexhelp.add_unichar buf (int lo);
-      string sargs lexbuf  }
+      string sargs skip lexbuf  }
      
  |  '"' 
     { let (buf,fin,m,args) = sargs in 
@@ -508,22 +508,22 @@ and string sargs = parse
     { let (buf,fin,m,args) = sargs in 
       mknewline 1 lexbuf; 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
  | ident  
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
  | xinteger
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
  | anywhite +  
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
  | eof  
     { let (buf,fin,m,args) = sargs in 
@@ -531,14 +531,14 @@ and string sargs = parse
  | _ 
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (lexeme lexbuf); 
-      string sargs lexbuf }
+      string sargs skip lexbuf }
 
 (* REVIEW: consider sharing this code with the 'string' lexer state *)
-and vstring sargs = parse
+and vstring sargs skip = parse
  |  '"' '"'
    { let (buf,fin,m,args) = sargs in 
      Lexhelp.add_byte_char buf '\"';
-     vstring sargs lexbuf } 
+     vstring sargs skip lexbuf } 
 
  |  '"' 
     { let (buf,fin,m,args) = sargs in 
@@ -554,22 +554,22 @@ and vstring sargs = parse
     { let (buf,fin,m,args) = sargs in 
       mknewline 1 lexbuf; 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      vstring sargs lexbuf }
+      vstring sargs skip lexbuf }
 
  | ident  
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      vstring sargs lexbuf }
+      vstring sargs skip lexbuf }
 
  | xinteger
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      vstring sargs lexbuf }
+      vstring sargs skip lexbuf }
 
  | anywhite +  
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (ulexeme lexbuf); 
-      vstring sargs lexbuf }
+      vstring sargs skip lexbuf }
 
  | eof 
     { let (buf,fin,m,args) = sargs in 
@@ -577,34 +577,34 @@ and vstring sargs = parse
  | _ 
     { let (buf,fin,m,args) = sargs in 
       Lexhelp.add_string buf (lexeme lexbuf); 
-      vstring sargs lexbuf }
+      vstring sargs skip lexbuf }
 
 (* WARNING: taking sargs as a single parameter seems to make a difference as to whether *)
 (* OCaml takes tailcalls. *)
-and comment cargs = parse
+and comment cargs skip = parse
  |  char | '"' | '@'
     { let n,m,args = cargs in 
-      comment(n,m,args) lexbuf  } 
+      comment(n,m,args) skip lexbuf  } 
     
  | '(' '*'
     { let n,m,args = cargs in 
-      comment (n+1,m,args) lexbuf }
+      comment (n+1,m,args) skip lexbuf }
      
  | newline
     { let n,m,args = cargs in 
       mknewline 1 lexbuf; 
-      comment cargs lexbuf }
+      comment cargs skip lexbuf }
  
  | "*)" 
     { 
       let n,m,args = cargs in 
-      if n > 1 then comment (n-1,m,args) lexbuf 
-      else (lexbuf.StartPos <- blockCommentStartPos; COMMENT) }
+      if n > 1 then comment (n-1,m,args) skip lexbuf 
+      else (lexbuf.StartPos <- blockCommentStartPos; if not skip then COMMENT else token args skip lexbuf) }
       
  | [^ '\'' '(' '*' '\n' '\r' '"' ')' '@' ]+  
     { 
       let n,m,args = cargs in 
-      comment cargs lexbuf }
+      comment cargs skip lexbuf }
     
  | eof 
      { let n,m,args = cargs in 
@@ -613,15 +613,15 @@ and comment cargs = parse
 	   else EOF }
      
  | _ { let n,m,args = cargs in 
-       comment(n,m,args) lexbuf }
+       comment(n,m,args) skip lexbuf }
 
-and cpp_filename args = parse
+and cpp_filename args skip = parse
  | ' ' '"' [^ '"']+ '"'
      { let s = trim_both lexbuf 2 1 in
 	   let r = getLexerRange lexbuf in
 	   Range.set_file_of_range r s;
-	   ignore_endline args lexbuf }
+	   ignore_endline args skip lexbuf }
 
-and ignore_endline args = parse
+and ignore_endline args skip = parse
  | ' '* newline
-     { token args lexbuf }
+     { token args skip lexbuf }

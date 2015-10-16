@@ -146,22 +146,9 @@ let parse fn =
   let lexbuf = Microsoft.FSharp.Text.Lexing.LexBuffer<char>.FromTextReader(sr) in
   resetLexbufPos filename lexbuf;
   let lexargs = Lexhelp.mkLexargs ((fun () -> "."), filename,fs) in
-  let lexer = LexFStar.token lexargs in
-  let getNextToken () =
-    let tokens = 
-        seq{while not lexbuf.IsPastEndOfStream do 
-                    yield lexer lexbuf
-            done
-           }
-        |> Seq.filter(function Parse.LINE_COMMENT | Parse.COMMENT -> false | _ -> true)
-        |> fun s -> s.GetEnumerator()
-    in
-    fun (lexbuf) ->
-        let t = tokens.MoveNext() in
-        tokens.Current
-  in
+  let lexer = LexFStar.token lexargs true in
   try
-    let fileOrFragment = Parse.inputFragment (getNextToken ()) <| Microsoft.FSharp.Text.Lexing.LexBuffer<_>.FromString "*this is stub*" in
+    let fileOrFragment = Parse.inputFragment lexer lexbuf in
     let frags = match fileOrFragment with
         | Inl mods ->
            if Util.ends_with filename ".fsi" || Util.ends_with filename ".fsti"
