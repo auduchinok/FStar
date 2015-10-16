@@ -128,7 +128,7 @@ let batch_mode_tc filenames =
     let prims_mod, dsenv, env = tc_prims () in
 
     let all_mods, dsenv, env = batch_mode_tc_no_prims dsenv env filenames in
-   prims_mod@all_mods, dsenv, env
+    prims_mod@all_mods, dsenv, env
 
 let finished_message fmods =
     if not !Options.silent
@@ -188,9 +188,11 @@ let interactive_mode dsenv env =
               Tc.Env.pop env msg |> ignore;
               env.solver.refresh();
               Options.reset_options() |> ignore;
-              let (curmod, dsenv, env), stack = match stack with
+              let (curmod, dsenv, env), stack = 
+                match stack with
                 | [] -> failwith "Too many pops"
                 | hd::tl -> hd, tl in
+
               go stack curmod dsenv env
 
             | Push msg ->
@@ -284,7 +286,7 @@ let processing res filenames =
                                     | [f] -> Parser.Driver.read_build_config f //then, try to read a build config from the header of the file
                                     | _ -> Util.print_string "--use_build_config expects just a single file on the command line and no other arguments"; exit 1
                              else filenames in
-             let fmods, dsenv, env = batch_mode_tc filenames  in
+             let fmods, dsenv, env = batch_mode_tc filenames in
              report_errors None;
              if !Options.interactive
              then interactive_mode dsenv env
@@ -300,17 +302,13 @@ let go () =
   processing res filenames
   
 let goInternal str =
-    Options.reset_options() ;
-        let (res, filenames) = process_args_string str in
-        processing res filenames
+    let r = Options.reset_options() in
+    let (res, filenames) = process_args_string str in
+    processing r filenames
    
 
 let main () =
-    try
-      printfn "First session";
-      go ();
-      cleanup ();
-      printfn "Second session";
+    try      
       go ();
       cleanup ();
       exit 0
