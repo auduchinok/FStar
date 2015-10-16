@@ -1,0 +1,6 @@
+create or replace PACKAGE emp_pack AS                           
+   TYPE EmpRecTyp IS RECORD (emp_id INTEGER, name VARCHAR2);               
+    PROCEDURE fire_emp (emp_id NUMBER);       
+    PROCEDURE hire_emp (ename VARCHAR2);        
+END emp_pack;
+/
