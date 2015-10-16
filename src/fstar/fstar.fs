@@ -305,6 +305,7 @@ let goInternal str =
     let r = Options.reset_options() in
     let (res, filenames) = process_args_string str in
     processing r filenames
+        
    
 
 let main () =
