@@ -60,7 +60,6 @@
     </PreBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\packages\FsLexYacc\bin\FsLexYacc.targets" Condition="Exists('$(SolutionDir)\packages\FsLexYacc\bin\FsLexYacc.targets')" />
-    <Error Condition="!Exists('..\VS\packages\FsLexYacc.6.1.0\build\FsLexYacc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\VS\packages\FsLexYacc.6.1.0\build\FsLexYacc.targets'))" />
   <ItemGroup>
     <FsYacc Include="parse.fsy">
       <OtherFlags>--module FStar.Parser.Parse</OtherFlags>
@@ -114,7 +113,6 @@
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="..\VS\packages\FsLexYacc.6.1.0\build\FsLexYacc.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">
