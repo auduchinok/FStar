@@ -1,6 +1,6 @@
 (*--build-config
     options:--admit_fsi FStar.Set --admit_fsi Wysteria --admit_fsi Prins --admit_fsi FStar.OrdSet --admit_fsi FStar.IO;
-    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst st2.fst ordset.fsi ../prins.fsi ffi.fst wysteria.fsi
+    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst listTot.fst st2.fst ordset.fsi ../prins.fsi ffi.fst wysteria.fsi
  --*)
 
 (* Millionaire's with 2 parties *)
@@ -28,7 +28,18 @@ let mill1 _ =
   let y = as_par bob_s read_fn in
   
   let g:unit -> Wys bool (pre (Mode Sec ab)) post =
-    fun _ -> (unbox_s x) > (unbox_s y)
+    fun _ ->
+    let x = unbox_s x in
+    let y = unbox_s y in
+    let b =
+      if x > y then
+	let b = true in
+	b
+      else
+	let b = false in
+	b
+    in
+    b
   in
 
   as_sec ab g

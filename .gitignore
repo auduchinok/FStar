@@ -49,6 +49,7 @@ dump
 *.cmxa
 *.so
 
+/VS/
 src/**/bin/Release/*
 src/**/bin/**/*.dll
 src/**/bin/**/*.xml
