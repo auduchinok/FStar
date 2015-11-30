@@ -138,8 +138,9 @@ let finished_message fmods =
             else if !Options.pretype then "Lax type-checked"
             else "Parsed and desugared" in
          fmods |> List.iter (fun m ->
+            let tag = if m.is_interface then "i'face" else "module" in
             if Options.should_print_message m.name.str
-            then Util.print_string (Util.format2 "%s module: %s\n" msg (Syntax.text_of_lid m.name)));
+            then Util.print_string (Util.format3 "%s %s: %s\n" msg tag (Syntax.text_of_lid m.name)));
          print_string "All verification conditions discharged successfully\n"
     end
 
@@ -185,6 +186,7 @@ let interactive_mode dsenv env =
     let rec go (stack:stack) curmod dsenv env =
         begin match fill_chunk () with
             | Pop msg ->
+              Parser.DesugarEnv.pop dsenv |> ignore;
               Tc.Env.pop env msg |> ignore;
               env.solver.refresh();
               Options.reset_options() |> ignore;

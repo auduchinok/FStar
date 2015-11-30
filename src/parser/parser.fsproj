@@ -81,7 +81,7 @@
     <Compile Include="parseit.fs" />
     <Compile Include="driver.fs" />
     <Content Include="app.config" />
-    <Content Include="packages.config" />
+
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\tc\tc.fsproj">

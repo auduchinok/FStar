@@ -1,6 +1,6 @@
 (*--build-config
     options:--admit_fsi FStar.Set --admit_fsi Wysteria --admit_fsi Prins --admit_fsi FStar.OrdSet --admit_fsi FStar.IO;
-    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst st2.fst ordset.fsi ../prins.fsi ffi.fst wysteria.fsi
+    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst listTot.fst st2.fst ordset.fsi ../prins.fsi ffi.fst wysteria.fsi
  --*)
 
 module SMC
@@ -90,8 +90,8 @@ val opt_median_secure_alice: x1:Box int alice_s -> x2:Box int alice_s
                              -> y1:Box int bob_s -> y2:Box int bob_s
                              -> y1':Box int bob_s -> y2':Box int bob_s
                              -> unit
-                             -> Wys2 int int (fun m0 -> m0 = R (Mode Par ab) (Mode Par ab) /\
-                                                        median_pre x1 x2 y1 y2 /\ median_pre x1 x2 y1' y2')
+                             -> Wys2 (rel int int) (fun m0 -> m0 = R (Mode Par ab) (Mode Par ab) /\
+                                                      median_pre x1 x2 y1 y2 /\ median_pre x1 x2 y1' y2')
                                              (fun m0 r t -> R.l r = R.r r ==> R.l t = R.r t)
 let opt_median_secure_alice x1 x2 y1 y2 y1' y2' _ =
   compose_wys2 (optimized_median x1 x2 y1 y2) (optimized_median x1 x2 y1' y2')
@@ -100,7 +100,7 @@ val opt_median_secure_bob: x1:Box int alice_s -> x2:Box int alice_s
                            -> x1':Box int alice_s -> x2':Box int alice_s
                            -> y1:Box int bob_s -> y2:Box int bob_s
                            -> unit
-                           -> Wys2 int int (fun m0 -> m0 = R (Mode Par ab) (Mode Par ab) /\
+                           -> Wys2 (rel int int) (fun m0 -> m0 = R (Mode Par ab) (Mode Par ab) /\
                                                       median_pre x1 x2 y1 y2 /\ median_pre x1' x2' y1 y2)
                                            (fun m0 r t -> R.l r = R.r r ==> R.l t = R.r t)
 let opt_median_secure_bob x1 x2 x1' x2' y1 y2 _ =
