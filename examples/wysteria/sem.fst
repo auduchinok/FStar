@@ -90,11 +90,6 @@ let step_aspar c = match c with
     let m'  = if src l then Mode Par ps else m in
     let s'  = (Frame m en' (F_aspar_ret ps) tr)::s in
 
-    (*
-     * for parties not in ps, the choice of empty_env is arbitrary
-     * perhaps we should prove the theorem using any env and then
-     * implementation can make whatever decision (retain env as in F* semantics)
-     *)
     let en', t' =
       if src l then update_env en x V_unit, T_exp e
       else
@@ -976,7 +971,7 @@ let rec compose_vals #m1 #m2 v1 v2 =
      | V_wire all1 eps1 w1 ->
        if is_v_wire v2 then
          let V_wire all2 eps2 w2 = v2 in
-         if is_empty (intersect eps1 eps2) && all1 = all2 then
+         if is_empty (intersect eps1 eps2) (*&& all1 = all2*) then
            D_v (Meta empty Can_b (union eps1 eps2) Cannot_w)
                (V_wire all1 (union eps1 eps2) (compose_wires #eps1 #eps2 w1 w2 eps1))
          else emp
@@ -1105,9 +1100,6 @@ and slice_en_sps ps en =
           else
             Some (slice_v_sps ps (D_v.v (Some.v (en x))))
 
-(*
- * TODO: we should update proofs to use these functions instead
- *)
 val slice_v_ffi: prin -> dvalue -> Tot dvalue
 let slice_v_ffi p dv =
   let D_v meta v = dv in

@@ -1,6 +1,6 @@
 (*--build-config
     options:--admit_fsi FStar.Set --admit_fsi Wysteria --admit_fsi Prins --admit_fsi FStar.OrdSet --admit_fsi FStar.IO;
-    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst listTot.fst st2.fst ordset.fsi ../prins.fsi ffi.fst wysteria.fsi
+    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst listTot.fst st2.fst ordset.fsi ../../prins.fsi ../ffi.fst ../wysteria.fsi
  --*)
 
 module SMC
@@ -71,23 +71,26 @@ let rec waps #eps ps w f =
     let _ = eq_lemma ps (union (singleton p) ps') in
     concat_wire wp w'
 
-val gps_sec: ps:prins -> w:Wire int ps -> unit
+val gps: ps:prins -> w:Wire int ps
              -> Wys (Wire prin ps) (pre (Mode Par ps)) post
-let gps_sec ps w _ =
+let gps ps w =
 
   let wfold_f: int -> prev:prin{w_contains prev w}
                -> p:prin{w_contains p w} -> y:int{w_select p w = y}
                -> Wys (prev:prin{w_contains prev w}) (fun m0 -> b2t (m0 = Mode Sec ps)) (fun m0 r t -> True) =
     fun c prev p y ->
       let y' = projwire_s prev w in
-      if c - y' < c - y then prev else p
+      if c - y' = 0 then p
+      else if c - y = 0 then prev
+      else if c - y' < c - y then prev
+      else p
   in
 
   let waps_f: p:prin{w_contains p w} -> x:int{w_select p w = x}
               -> Wys prin (pre (Mode Sec ps)) post =
     fun p x ->
-      let ps' = remove p ps in
-      wfold ps' w (wfold_f x) p
+      //let ps' = remove p ps in
+      wfold ps w (wfold_f x) p
   in
 
   let g: unit -> Wys (Wire prin ps) (pre (Mode Sec ps)) post =
@@ -95,26 +98,3 @@ let gps_sec ps w _ =
   in
 
   as_sec ps g
-
-val gps: unit -> Wys unit (pre (Mode Par abc)) post
-let gps _ =
-  let x = as_par alice_s read_fn in
-  let y = as_par bob_s read_fn in
-  let z = as_par charlie_s read_fn in
-
-  let wa = mkwire_p alice_s x in
-  let wb = mkwire_p bob_s y in
-  let wc = mkwire_p charlie_s z in
-
-  let w1 = concat_wire wa wb in
-  let w2 = concat_wire w1 wc in
-
-  let t1 = as_par ab (gps_sec ab w1) in
-
-  let _ = cut (b2t (subset abc abc)) in
-  let _ = cut (can_box (Wire prin abc) abc) in
-  let t2 = as_par abc (gps_sec abc w2) in
-  ()
-;;
-
-let x = main abc gps in ()

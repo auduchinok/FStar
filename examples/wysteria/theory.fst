@@ -221,7 +221,8 @@ val slice_concat_lemma_sps:
           (ensures (slice_tr_sps ps (concat_traces tr1 tr2) = concat_traces (slice_tr_sps ps tr1) (slice_tr_sps ps tr2)))
     [SMTPat (slice_tr_sps ps (concat_traces tr1 tr2))]
 let slice_concat_lemma_sps ps tr1 tr2 = admit()
-(* CH: this fails on my laptop with Unknown assertion failed
+(* CH: this times out on my laptop with Unknown assertion failed
+   AR: works for me
   slice_h_append_lemma_forall_sps ();
   let _ = assert (slice_tr_sps_h ps (append (reveal tr1) (reveal tr2)) = append (slice_tr_sps_h ps (reveal tr1)) (slice_tr_sps_h ps (reveal tr2))) in
   ()
@@ -793,6 +794,7 @@ val slice_concat_lemma:
     [SMTPat (slice_tr p (concat_traces tr1 tr2))]
 let slice_concat_lemma p tr1 tr2 = admit()
 (* CH: this fails on my laptop with Unknown assertion failed
+   AR: works for me
   slice_h_append_lemma_forall ();
   let _ = assert (slice_tr_h p (append (reveal tr1) (reveal tr2)) = append (slice_tr_h p (reveal tr1)) (slice_tr_h p (reveal tr2))) in
   ()
@@ -2530,6 +2532,14 @@ let rec p_terminating_run_implies_p_terminates_in #ps #pi #pi' #n h = match h wi
     in
     PTerm_step #ps #pi #pi' #m hmp f
 
+opaque val s_terminating_run_implies_p_terminates_in:
+  #c:sconfig -> #c':sconfig -> ht:s_terminating_run c c' -> ps:prins{ps = all_prins ()}
+  -> Tot (n:nat & (p_terminates_in #ps (slice_c_ps ps c) (slice_c_ps ps c') n))
+let s_terminating_run_implies_p_terminates_in #c #c' ht ps =
+  let (| n, h_ptrun |) = s_terminating_run_gives_p_terminating_run #c #c' ht ps in
+  let h_pt = p_terminating_run_implies_p_terminates_in #ps #(slice_c_ps ps c) #(slice_c_ps ps c') #n h_ptrun in
+  (| n, h_pt |)
+
 // val pterminates_confluence:
 //   #ps:prins -> pi:protocol ps
 //   -> pi1:protocol ps -> n1:nat -> h1:pterminates_in #ps pi pi1 n1
@@ -2583,7 +2593,7 @@ let rec composable_vals dv1 dv2 = match dv1, dv2 with
     Mk_c_w c1 = Mk_c_w c2
   | D_v _ (V_box #meta1 ps1 v1), D_v _ (V_box #meta2 ps2 v2) ->
     ps1 = ps2 && composable_vals (D_v meta1 v1) (D_v meta2 v2)
-  | D_v _ (V_wire all1 eps1 _), D_v _ (V_wire all2 eps2 _) -> intersect eps1 eps2 = empty && all1 = all2
+  | D_v _ (V_wire all1 eps1 _), D_v _ (V_wire all2 eps2 _) -> intersect eps1 eps2 = empty (*&& all1 = all2*)
   | D_v _ (V_clos en1 x1 e1), D_v _ (V_clos en2 x2 e2) ->
     x1 = x2 && e1 = e2 && composable_envs en1 en2
   | D_v _ (V_fix_clos en1 f1 x1 e1), D_v _ (V_fix_clos en2 f2 x2 e2) ->

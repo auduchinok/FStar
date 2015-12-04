@@ -1,6 +1,6 @@
 (*--build-config
     options:--admit_fsi FStar.Set --admit_fsi Wysteria --admit_fsi Prins --admit_fsi FStar.OrdSet --admit_fsi FStar.IO;
-    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst listTot.fst st2.fst ordset.fsi ../prins.fsi ffi.fst wysteria.fsi
+    other-files:ghost.fst ext.fst set.fsi heap.fst st.fst all.fst io.fsti list.fst listTot.fst st2.fst ordset.fsi ../../prins.fsi ../ffi.fst ../wysteria.fsi
  --*)
 
 (* PSI *)
@@ -74,13 +74,13 @@ let rec mem x l len n =
 val lmem: int -> list int -> GTot bool
 let lmem x l = FStar.List.Tot.mem x l
 
-val psi: l1:Box (list int) alice_s -> l2:Box (list int) bob_s
-	 -> len1:nat{len1 = length (v_of_box l1)} -> len2:nat{len2 = length (v_of_box l2)}
-         -> n1:nat{n1 <= len1}
-	 -> Wys (list int) (pre (Mode Par ab)) (fun _ r _ -> forall x. lmem x r <==> (mem_begin x 0 (v_of_box l2) /\
-	                                                                 mem_begin x n1 (v_of_box l1)))
-	   (decreases (len1 - n1))
-let rec psi l1 l2 len1 len2 n1 =
+val psi_h: l1:Box (list int) alice_s -> l2:Box (list int) bob_s
+	   -> len1:nat{len1 = length (v_of_box l1)} -> len2:nat{len2 = length (v_of_box l2)}
+           -> n1:nat{n1 <= len1}
+	   -> Wys (list int) (pre (Mode Par ab)) (fun _ r _ -> forall x. lmem x r <==> (mem_begin x 0 (v_of_box l2) /\
+	                                                                   mem_begin x n1 (v_of_box l1)))
+	     (decreases (len1 - n1))
+let rec psi_h l1 l2 len1 len2 n1 =
   let _ = admitP (forall (x:int) (n:nat) (l:list int). (n + 1 <= length l) ==> mem_begin x (n + 1) l ==> mem_begin x n l) in
   if n1 = len1 then (mk_nil ())
   else
@@ -89,15 +89,13 @@ let rec psi l1 l2 len1 len2 n1 =
     in
     let x = as_par alice_s g in
     let p = mem x l2 len2 0 in
-    let l = psi l1 l2 len1 len2 (n1 + 1) in
+    let l = psi_h l1 l2 len1 len2 (n1 + 1) in
     if fst p then mk_cons (snd p) l
     else l
 
-val psi_m: unit -> Wys (list int) (pre (Mode Par ab)) post
-let psi_m _ =
-  let l1 = as_par alice_s (read_fn alice) in
-  let l2 = as_par bob_s (read_fn bob) in
-
+val psi_m: l1:Box (list int) alice_s -> l2:Box (list int) bob_s
+           -> Wys (list int) (pre (Mode Par ab)) post
+let psi_m l1 l2 =
   let len: p:prin -> l:(Box (list int) (singleton p))
            -> unit
 	   -> Wys nat (pre (Mode Par (singleton p))) (fun _ r _ -> True /\ r = length (v_of_box l)) =
@@ -117,11 +115,45 @@ let psi_m _ =
   let n1' = as_sec ab (g alice n1) in
   let n2' = as_sec ab (g bob n2) in
 
-  let l = psi l1 l2 n1' n2' 0 in
+  let l = psi_h l1 l2 n1' n2' 0 in
   let _ = assert (forall x. lmem x l <==> (mem_begin x 0 (v_of_box l2) /\
 	                            mem_begin x 0 (v_of_box l1))) in
   l
-;;
 
-let l = main ab psi_m in
-print_int_list l
+val psi: ps:prins{ps = ab} -> w:Wire (list int) ps -> Wys (Wire (list int) ab) (pre (Mode Par ab)) post
+let psi ps w =
+  let proj: p:prin{FStar.OrdSet.mem p ab} -> unit -> Wys (list int) (pre (Mode Par (singleton p))) post =
+    fun p _ -> projwire_p p w
+  in
+  let l1 = as_par alice_s (proj alice) in
+  let l2 = as_par bob_s (proj bob) in
+  let l = psi_m l1 l2 in
+
+  let trivial: unit -> Wys (list int) (pre (Mode Par ab)) post =
+    fun _ -> l
+  in
+  mkwire_p ab (as_par ab trivial)
+
+val regmem: int -> list int -> Tot bool
+let rec regmem x l =
+  if is_Nil l then false
+  else
+    if hd_of_cons l = x then true
+    else regmem x (tl_of_cons l)
+
+val intersect: l1:list int -> l2:list int -> Tot (list int)
+let rec intersect l1 l2 = 
+  if is_Nil l1 then mk_nil ()
+  else
+    if regmem (hd_of_cons l1) l2 then mk_cons (hd_of_cons l1) (intersect (tl_of_cons l1) l2)
+    else intersect (tl_of_cons l1) l2
+
+val psi_reg: ps:prins{ps = ab} -> w:Wire (list int) ps -> Wys (Wire (list int) ab) (pre (Mode Par ab)) post
+let psi_reg ps w =
+  let g:unit -> Wys (Wire (list int) ab) (pre (Mode Sec ab)) post =
+    fun _ ->
+    let l1 = projwire_s alice w in
+    let l2 = projwire_s bob w in
+    mkwire_s ab (intersect l1 l2)
+  in
+  as_sec ab g
