@@ -55,3 +55,14 @@ src/**/bin/**/*.dll
 src/**/bin/**/*.xml
 
 src/fstar/bin/Release/FStar.exe
+
+tags
+
+*~
+*.swp
+
+/.nubuild
+/nucache/
+/nuobj/
+nubuild.log
+nubuild.progress

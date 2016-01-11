@@ -1,6 +1,6 @@
 (*--build-config
     options:--admit_fsi FStar.Set --admit_fsi FStar.Seq;
-    other-files: classical.fst ext.fst set.fsi heap.fst st.fst all.fst seq.fsi seqproperties.fst
+    other-files: FStar.Classical.fst FStar.FunctionalExtensionality.fst set.fsi heap.fst st.fst all.fst seq.fsi FStar.SeqProperties.fst
   --*)
 
 module Platform.Bytes
@@ -152,6 +152,9 @@ assume val utf8 : string -> Tot bytes
 assume val iutf8_opt : bytes -> Tot (option string)
 assume val iutf8 : m:bytes -> s:string{utf8 s == m}
 (*@  assume (!x. (!y. Utf8 (x) = Utf8 (y) => x = y)) @*)
+
+// Pretty printing of bytes for debugging
+assume val print_bytes: bytes -> Tot string
 
 val byte_of_int: n:nat{n < 256} -> Tot byte
 let byte_of_int n = 
