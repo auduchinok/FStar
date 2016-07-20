@@ -20,7 +20,7 @@ open System.IO
 open FStar.BaseTypes
 
 exception Impos
-exception NYI of string
+exception NotImplemented of string
 exception Failure of string
 
 val max_int: int

@@ -292,20 +292,20 @@ let rec specs () : list<Getopt.opt> =
                "[off|warn|check]"),
        "Check cardinality constraints on inductive data types (default 'off')");
 
-     ( noshort, 
-       "codegen", 
-        OneArg ((fun s -> String (parse_codegen s)), 
-                 "[OCaml|FSharp|Kremlin]"), 
+     ( noshort,
+       "codegen",
+        OneArg ((fun s -> String (parse_codegen s)),
+                 "[OCaml|FSharp|Kremlin]"),
         "Generate code for execution");
 
-     ( noshort, 
-        "codegen-lib", 
-        OneArg ((fun s -> List (s::get_codegen_lib() |> List.map String)), 
-                 "[namespace]"), 
+     ( noshort,
+        "codegen-lib",
+        OneArg ((fun s -> List (s::get_codegen_lib() |> List.map String)),
+                 "[namespace]"),
         "External runtime library (i.e. M.N.x extracts to M.N.X instead of M_N.x)");
-     
-     ( noshort, 
-        "debug", 
+
+     ( noshort,
+        "debug",
         OneArg ((fun x -> List (x::get_debug() |> List.map String)),
                  "[module name]"),
         "Print lots of debugging information while checking module");
@@ -683,10 +683,10 @@ let resettable_specs = all_specs |> List.filter (fun (_, x, _, _) -> resettable 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PUBLIC API
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-let display_usage () = display_usage_aux (specs())
+let display_usage () = display_usage_aux (specs ())
 
 let fstar_home () =
-    match get_fstar_home() with
+    match get_fstar_home () with
     | None ->
       let x = Util.get_exec_dir () in
       let x = x ^ "/.." in
@@ -696,14 +696,14 @@ let fstar_home () =
 
 let set_options o s =
     let specs = match o with
-        | Set -> if (not (get_stratified())) then resettable_specs else settable_specs
+        | Set -> if (not (get_stratified ())) then resettable_specs else settable_specs
         | Reset -> resettable_specs
         | Restore -> all_specs in
     Getopt.parse_string specs (fun _ -> ()) s
 
 let parse_cmd_line () =
   let file_list = Util.mk_ref [] in
-  let res = Getopt.parse_cmdline (specs()) (fun i -> file_list := !file_list @ [i]) in
+  let res = Getopt.parse_cmdline (specs ()) (fun i -> file_list := !file_list @ [i]) in
   res, !file_list
 
 let restore_cmd_line_options should_clear =
@@ -711,7 +711,7 @@ let restore_cmd_line_options should_clear =
      * Add them here as needed. *)
     let old_verify_module = get_verify_module() in
     if should_clear then clear() else init();
-    let r = Getopt.parse_cmdline (specs()) (fun x -> ()) in
+    let r = Getopt.parse_cmdline (specs ()) (fun x -> ()) in
     set_option' ("verify_module", List (List.map String old_verify_module));
     r
 
@@ -757,12 +757,12 @@ let find_file filename =
 let prims () =
   match get_prims() with
   | None ->
-    let filen = "prims.fst" in
-    begin match find_file filen with
+    let filename = "prims.fst" in
+    begin match find_file filename with
           | Some result ->
             result
           | None ->
-            raise (Util.Failure (Util.format1 "unable to find required file \"%s\" in the module search path.\n" filen))
+            raise (Util.Failure (Util.format1 "unable to find required file \"%s\" in the module search path.\n" filename))
     end
   | Some x -> x
 
@@ -778,7 +778,7 @@ let codegen                      () = get_codegen                     ()
 let codegen_libs                 () = get_codegen_lib () |> List.map (fun x -> Util.split x ".")
 let debug_any                    () = get_debug () <> []
 let debug_at_level      modul level = (modul = "" || get_debug () |> List.contains modul) && debug_level_geq level
-let dep                          () = get_dep                         ()
+let print_deps_only              () = get_dep                         ()
 let detail_errors                () = get_detail_errors               ()
 let dump_module                  s  = get_dump_module() |> List.contains s
 let eager_inference              () = get_eager_inference             ()
@@ -802,9 +802,9 @@ let min_fuel                     () = get_min_fuel                    ()
 let ml_ish                       () = get_MLish                       ()
 let n_cores                      () = get_n_cores                     ()
 let no_default_includes          () = get_no_default_includes         ()
-let no_extract                   s  = get_no_extract() |> List.contains s
+let no_extract                   s  = get_no_extract () |> List.contains s
 let no_location_info             () = get_no_location_info            ()
-let norm_then_print              () = get_print_before_norm()=false
+let norm_then_print              () = get_print_before_norm () = false
 let output_dir                   () = get_odir                        ()
 let print_bound_var_types        () = get_print_bound_var_types       ()
 let print_effect_args            () = get_print_effect_args           ()
@@ -817,7 +817,7 @@ let silent                       () = get_silent                      ()
 let split_cases                  () = get_split_cases                 ()
 let timing                       () = get_timing                      ()
 let trace_error                  () = get_trace_error                 ()
-let universes                    () = (not (get_stratified()))
+let universes                    () = (not (get_stratified ()))
 let unthrottle_inductives        () = get_unthrottle_inductives       ()
 let use_eq_at_higher_order       () = get_use_eq_at_higher_order      ()
 let use_hints                    () = get_use_hints                   ()

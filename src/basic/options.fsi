@@ -57,7 +57,7 @@ val codegen                     : unit    -> option<string>
 val codegen_libs                : unit    -> list<list<string>>
 val debug_any                   : unit    -> bool
 val debug_at_level              : string  -> debug_level_t -> bool
-val dep                         : unit    -> option<string>
+val print_deps_only                         : unit    -> option<string>
 val detail_errors               : unit    -> bool
 val display_usage               : unit    -> unit
 val dont_gen_projectors         : string  -> bool

@@ -30,7 +30,7 @@ let handle_err warning e =
   match e with
     | Error(msg, r) ->
         fprint stderr "%s : %s\n%s\n" [Range.string_of_range r; (if warning then "Warning" else "Error"); msg]
-    | NYI s ->
+    | NotImplemented s ->
         fprint stderr "Feature not yet implemented: %s" [s]
     | Err s ->
         fprint stderr "Error: %s" [s]
@@ -38,7 +38,7 @@ let handle_err warning e =
 
 let handleable = function
   | Error _
-  | NYI _
+  | NotImplemented _
   | Err _ -> true
   | _ -> false
 

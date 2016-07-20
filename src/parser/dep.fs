@@ -603,7 +603,7 @@ let print_make (deps: list<(string * list<string>)>): unit =
   ) deps
 
 let print (make_deps, _, graph): unit =
-  match (Options.dep()) with
+  match Options.print_deps_only() with
   | Some "make" ->
       print_make make_deps
   | Some "graph" ->

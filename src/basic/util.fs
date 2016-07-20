@@ -33,7 +33,7 @@ let time_diff (t1:time) (t2:time) : float * int =
     ts.TotalSeconds, int32 ts.TotalMilliseconds
 
 exception Impos
-exception NYI of string
+exception NotImplemented of string
 exception Failure of string
 let max_int: int = System.Int32.MaxValue
 

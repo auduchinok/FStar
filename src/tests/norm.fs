@@ -82,7 +82,7 @@ let run i r expected =
 //    force_term r;
     Printf.printf "%d: ... \n" i;
     let _, tcenv = Pars.init() in
-    FStar.process_args() |> ignore; //set the command line args for debugging
+    Options.parse_cmd_line () |> ignore; //set the command line args for debugging
     let x = N.normalize [N.Beta; N.UnfoldUntil Delta_constant] tcenv r in
     Options.init(); //reset them
 //    Printf.printf "result = %s\n" (P.term_to_string x);

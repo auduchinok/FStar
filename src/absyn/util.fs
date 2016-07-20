@@ -32,7 +32,7 @@ let handle_err warning ret e =
     | Error(msg, r) ->
         fprint stderr "%s : %s\n%s\n" [Range.string_of_range r; (if warning then "Warning" else "Error"); msg];
         ret
-    | NYI s ->
+    | NotImplemented s ->
         fprint stderr "Feature not yet implemented: %s" [s];
         ret
     | Err s ->
@@ -42,7 +42,7 @@ let handle_err warning ret e =
 let handleable = function
   | Failure _
   | Error _
-  | NYI _
+  | NotImplemented _
   | Err _ -> true
   | _ -> false
 

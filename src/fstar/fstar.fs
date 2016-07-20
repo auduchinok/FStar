@@ -15,25 +15,21 @@
 *)
 #light "off"
 module FStar.FStar
+
 open FStar
 open FStar.Util
 open FStar.Getopt
 open FStar.Ident
 open FStar.Interactive
 
-(* process_args:  parses command line arguments, setting FStar.Options *)
-(*                returns an error status and list of filenames        *)
-let process_args () : parse_cmdline_res * list<string> =
-  Options.parse_cmd_line ()
-
 (* cleanup: kills background Z3 processes; relevant when --n_cores > 1 *)
-let cleanup () = Util.kill_all ()
+let cleanup = Util.kill_all
 
 (* printing total error count *)
 let report_errors () =
   let errs =
-      if (Options.universes())
-      then FStar.TypeChecker.Errors.get_err_count()
+      if Options.universes ()
+      then FStar.TypeChecker.Errors.get_err_count ()
       else FStar.Tc.Errors.get_err_count () in
   if errs > 0 then begin
     Util.print1_error "%s errors were reported (see above)\n" (string_of_int errs);
@@ -42,7 +38,7 @@ let report_errors () =
 
 (* printing a finished message *)
 let finished_message fmods =
-  if not (Options.silent()) then begin
+  if not (Options.silent ()) then begin
     fmods |> List.iter (fun (iface, name) ->
                 let tag = if iface then "i'face" else "module" in
                 if Options.should_print_message name.str
@@ -67,64 +63,33 @@ let codegen uf_mods_env =
     | Some "FSharp" | Some "OCaml" ->
         let newDocs = List.collect Extraction.ML.Code.doc_of_mllib mllibs in
         List.iter (fun (n,d) ->
-          Util.write_file (Options.prepend_output_dir (n^ext)) (FStar.Format.pretty 120 d)
+          Util.write_file (Options.prepend_output_dir (n ^ ext)) (FStar.Format.pretty 120 d)
         ) newDocs
     | Some "Kremlin" ->
         let programs = List.flatten (List.map Extraction.Kremlin.translate mllibs) in
         let bin: Extraction.Kremlin.binary_format = Extraction.Kremlin.current_version, programs in
         save_value_to_file "out.krml" bin
 
+module F_Util = FStar.Absyn.Util
+module U_Util = FStar.Syntax.Util
 
-(****************************************************************************)
-(* Main function                                                            *)
-(****************************************************************************)
-let go _ =
-  let res, filenames = process_args () in
-  match res with
-    | Help ->
-        Options.display_usage(); exit 0
-    | Die msg ->
-        Util.print_string msg
-    | GoOn ->
-        if Options.dep() <> None  //--dep: Just compute and print the transitive dependency graph; don't verify anything
-        then Parser.Dep.print (Parser.Dep.collect Parser.Dep.VerifyAll filenames)
-        else if (Options.interactive()) then //--in
-          let filenames =
-            if (Options.explicit_deps()) then begin
-              if List.length filenames = 0 then
-                Util.print_error "--explicit_deps was provided without a file list!\n";
-                filenames
-              end
-            else begin
-              if List.length filenames > 0 then
-                Util.print_warning "ignoring the file list (no --explicit_deps)\n";
-                detect_dependencies_with_first_interactive_chunk ()
-              end
-          in
-          if Options.universes()
-          then let fmods, dsenv, env = Universal.batch_mode_tc Parser.Dep.VerifyUserList filenames in //check all the dependences in batch mode
-               interactive_mode (dsenv, env) None Universal.interactive_tc //and then start checking chunks from the current buffer
-          else let fmods, dsenv, env = Stratified.batch_mode_tc Parser.Dep.VerifyUserList filenames in //check all the dependences in batch mode
-               interactive_mode (dsenv, env) None Stratified.interactive_tc //and then start checking chunks from the current buffer
-
-        else if List.length filenames >= 1 then begin //normal batch mode
+let batch_check filenames =
+    match Options.print_deps_only () with
+    | Some _ -> Parser.Dep.print (Parser.Dep.collect Parser.Dep.VerifyAll filenames)
+    | None ->
+        if List.length filenames >= 1 then begin
           let verify_mode =
-            if Options.verify_all () then begin
-              if Options.verify_module () <> [] then begin
-                Util.print_error "--verify_module is incompatible with --verify_all";
-                exit 1
-              end;
-              Parser.Dep.VerifyAll
-            end else if Options.verify_module () <> [] then
-              Parser.Dep.VerifyUserList
-            else
-              Parser.Dep.VerifyFigureItOut
-          in
-          if Options.universes() then
+            match Options.verify_all (), Options.verify_module () with
+            | true, [] -> Parser.Dep.VerifyAll
+            | true, _  -> Util.print_error "--verify_module is incompatible with --verify_all"; exit 1
+            | _, []    -> Parser.Dep.VerifyFigureItOut
+            | _, _     -> Parser.Dep.VerifyUserList in
+
+          if Options.universes () then
             let fmods, dsenv, env = Universal.batch_mode_tc verify_mode filenames in
             report_errors ();
             codegen (Inr (fmods, env));
-            finished_message (fmods |> List.map Universal.module_or_interface_name)
+            finished_message (fmods |> List.map Universal.module_or_interface_name);
           else
             let fmods, dsenv, env = Stratified.batch_mode_tc verify_mode filenames in
             report_errors ();
@@ -133,24 +98,46 @@ let go _ =
         end else
           Util.print_error "no file provided\n"
 
-module F_Util = FStar.Absyn.Util
-module U_Util = FStar.Syntax.Util
+let interactive filenames =
+    let filenames =
+        if Options.explicit_deps () then begin
+            if List.length filenames = 0 then
+            Util.print_error "--explicit_deps was provided without a file list!\n";
+            filenames
+            end
+        else begin
+            if List.length filenames > 0 then
+            Util.print_warning "ignoring the file list (no --explicit_deps)\n";
+            detect_dependencies_with_first_interactive_chunk ()
+            end in
+    if Options.universes ()
+    then let fmods, dsenv, env = Universal.batch_mode_tc Parser.Dep.VerifyUserList filenames in //check all the dependences in batch mode
+        interactive_mode (dsenv, env) None Universal.interactive_tc //and then start checking chunks from the current buffer
+    else let fmods, dsenv, env = Stratified.batch_mode_tc Parser.Dep.VerifyUserList filenames in //check all the dependences in batch mode
+        interactive_mode (dsenv, env) None Stratified.interactive_tc //and then start checking chunks from the current buffer
 
 let main () =
   try
-    go ();
+    match Options.parse_cmd_line () with
+    | Help, _            -> Options.display_usage (); exit 0
+    | Error message, _   -> Util.print_string message
+    | Success, filenames ->
+        if Options.interactive ()
+        then interactive filenames
+        else batch_check filenames; cleanup (); batch_check filenames;
+
     cleanup ();
     exit 0
   with | e ->
-    (begin 
+    (begin
         if F_Util.handleable e then F_Util.handle_err false () e;
         if U_Util.handleable e then U_Util.handle_err false e;
         if (Options.trace_error()) then
           Util.print2_error "Unexpected error\n%s\n%s\n" (Util.message_of_exn e) (Util.trace_of_exn e)
         else if not (F_Util.handleable e || U_Util.handleable e) then
           Util.print1_error "Unexpected error; please file a bug report, ideally with a minimized version of the source program that triggered the error.\n%s\n" (Util.message_of_exn e)
-     end; 
-     cleanup();
+     end;
+     cleanup ();
      FStar.TypeChecker.Errors.report_all () |> ignore;
      report_errors ();
      exit 1)

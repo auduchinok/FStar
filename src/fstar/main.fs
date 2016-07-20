@@ -1,4 +1,4 @@
 #light "off"
 module FStar.Main
-let _ = FStar.main ()
 
+let _ = FStar.main ()

@@ -132,27 +132,27 @@ let new_sigtab () = Util.smap_create default_table_size
 let new_gamma_cache () = Util.smap_create 100
 
 let initial_env tc solver module_lid =
-  { solver=solver;
-    range=dummyRange;
-    curmodule=module_lid;
-    gamma= [];
-    gamma_cache=new_gamma_cache();
-    modules= [];
-    expected_typ=None;
-    sigtab=new_sigtab();
+  { solver = solver;
+    range = dummyRange;
+    curmodule = module_lid;
+    gamma = [];
+    gamma_cache = new_gamma_cache();
+    modules = [];
+    expected_typ = None;
+    sigtab = new_sigtab();
     is_pattern=false;
-    instantiate_imp=true;
-    effects={decls=[]; order=[]; joins=[]};
-    generalize=true;
-    letrecs=[];
-    top_level=false;
-    check_uvars=false;
-    use_eq=false;
-    is_iface=false;
-    admit=false;
-    type_of=tc;
-    universe_of=(fun g e -> U_zero); //TODO: FIXME!
-    use_bv_sorts=false;
+    instantiate_imp = true;
+    effects = {decls = []; order = []; joins = []};
+    generalize = true;
+    letrecs = [];
+    top_level = false;
+    check_uvars = false;
+    use_eq = false;
+    is_iface = false;
+    admit = false;
+    type_of = tc;
+    universe_of = (fun g e -> U_zero); //TODO: FIXME!
+    use_bv_sorts = false;
   }
 
 (* Marking and resetting the environment, for the interactive mode *)

@@ -289,7 +289,7 @@ let solver = {
     encode_modul=encode_modul;
     solve=solve;
     is_trivial=is_trivial;
-    finish=Z3.finish;
+    finish=finish;
     refresh=Z3.refresh;
 }
 let dummy = {

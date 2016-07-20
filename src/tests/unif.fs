@@ -44,7 +44,7 @@ let guard_eq i g g' =
 
 let unify i x y g' = 
     printfn "%d ..." i;
-    FStar.process_args () |> ignore; //set options
+    Options.parse_cmd_line () |> ignore; //set options
     let g = Rel.teq (tcenv()) x y |> Rel.solve_deferred_constraints (tcenv()) in
     Options.init();    //reset them
     guard_eq i g.guard_f g'
