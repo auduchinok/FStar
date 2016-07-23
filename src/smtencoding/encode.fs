@@ -1632,7 +1632,7 @@ and encode_sigelt' (env:env_t) (se:sigelt) : (decls_t * env_t) =
             kindingAx
             @(inversion_axioms tapp vars)
             @[pretype_axiom tapp vars] in
-        
+
         let g = decls
                 @binder_decls
                 @aux in
@@ -1925,7 +1925,6 @@ let push_env () = match !last_env with
 let pop_env () = match !last_env with
     | [] -> failwith "Popping an empty stack"
     | _::tl -> last_env := tl
-let clear_env () = last_env := []
 let mark_env () = push_env()
 let reset_mark_env () = pop_env()
 let commit_mark_env () =
@@ -1938,29 +1937,38 @@ let init tcenv =
     init_env tcenv;
     Z3.init ();
     Z3.giveZ3 [DefPrelude]
+
 let finish () =
     Z3.finish ();
-    clear_env ()
+    Z3.bg_scope := [];
+    Z3.fresh_scope := [[]];
+    Options.restore_cmd_line_options true false
+
 let push msg =
     push_env ();
     varops.push();
     Z3.push msg
+
 let pop msg   =
     ignore <| pop_env();
     varops.pop();
     Z3.pop msg
+
 let mark msg =
     mark_env();
     varops.mark();
     Z3.mark msg
+
 let reset_mark msg =
     reset_mark_env();
     varops.reset_mark();
     Z3.reset_mark msg
+
 let commit_mark msg =
     commit_mark_env();
     varops.commit_mark();
     Z3.commit_mark msg
+
 let encode_sig tcenv se =
    let caption decls =
     if Options.log_queries()
@@ -1978,10 +1986,10 @@ let encode_modul tcenv modul =
     let env = get_env tcenv in
     let decls, env = encode_signature ({env with warn=false}) modul.exports in
     let caption decls =
-    if Options.log_queries()
-    then let msg = "Externals for " ^ name in
-         Caption msg::decls@[Caption ("End " ^ msg)]
-    else decls in
+        if Options.log_queries()
+        then let msg = "Externals for " ^ name in
+             Caption msg::decls@[Caption ("End " ^ msg)]
+        else decls in
     set_env ({env with warn=true});
     if Env.debug tcenv Options.Low then Util.print1 "Done encoding externals for %s\n" name;
     let decls = caption decls in

@@ -145,7 +145,7 @@ let check_expected_effect env (copt:option<comp>) (e, c) : term * comp * guard_t
     | Some expected_c -> //expected effects should already be normalized
        if debug env Options.Low
        then Util.print3 "\n\n(%s) About to check\n\t%s\nagainst expected effect\n\t%s\n"
-               (Print.term_to_string e) (Print.comp_to_string c) (Print.comp_to_string expected_c);  
+               (Print.term_to_string e) (Print.comp_to_string c) (Print.comp_to_string expected_c);
        let c = norm_c env c in
        if debug env Options.Low
        then Util.print3 "\n\nAfter normalization (%s) About to check\n\t%s\nagainst expected effect\n\t%s\n"
@@ -344,7 +344,7 @@ and tc_maybe_toplevel_term env (e:term) : term                  (* type-checked 
             | _ -> Rel.trivial_guard in
     let gres = Rel.conj_guard g (Rel.conj_guard g' gimp) in
     if Env.debug env Options.Extreme
-    then Util.print2 "Guard from application node %s is %s\n" 
+    then Util.print2 "Guard from application node %s is %s\n"
                 (Print.term_to_string e)
                 (Rel.guard_to_string env gres);
     e, c, gres
@@ -428,7 +428,7 @@ and tc_value env (e:term) : term
 
   | Tm_unknown -> //only occurs where type annotations are missing in source programs
     let k, u = U.type_u () in
-    let r = Env.get_range env in 
+    let r = Env.get_range env in
     let t, _, g0 = TcUtil.new_implicit_var "type of user-provided implicit term" r env k in
     let e, _, g1 = TcUtil.new_implicit_var "user-provided implicit term" r env t in
     value_check_expected_typ env e (Inl t) (Rel.conj_guard g0 g1)
@@ -558,7 +558,7 @@ and tc_comp env c : comp                                      (* checked version
         | Some t ->
           let t = S.mk t None Range.dummyRange in
           let t = N.normalize [N.Beta] env t in
-          begin match t.n with 
+          begin match t.n with
           | Tm_type u -> u
           | _ -> failwith "Impossible:Unexpected sort for computation"
           end
@@ -806,11 +806,11 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
            where head is a computation returning a function of type (bs0@bs -> cres)
            and the paramters bs0 have been applied to the arguments in arg_comps_rev (in reverse order)
         and args_comps_rev = [(argn, _, cn), ..., (arg0, _, c0)]
-        
-        
+
+
         This function builds
             head arg0 ... argn : M (bs -> cres) wp
-        where in the case where 
+        where in the case where
             bs = [], i.e., a full application
                 M, wp is built using
                          bind chead (bind c0 (bind c1 ... (bind cn cres)))
@@ -821,7 +821,7 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
     let monadic_application (head, chead, ghead, cres) subst arg_comps_rev arg_rets guard fvs bs
         : term   //application of head to args
         * lcomp  //its computation type
-        * guard_t //and whatever guard remains 
+        * guard_t //and whatever guard remains
         =
         check_no_escape (Some head) env fvs cres.res_typ;
         let cres, guard =
@@ -839,8 +839,8 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
                     //if the function is pure, but its arguments are not, then add an equality refinement here
                     //OW, for pure applications we always add an equality at the end; see ADD_EQ_REFINEMENT below
                     Util.is_pure_or_ghost_lcomp cres
-                    && arg_comps_rev |> Util.for_some (function 
-                        | (_, _, None) -> false 
+                    && arg_comps_rev |> Util.for_some (function
+                        | (_, _, None) -> false
                         | (_, _, Some c) -> not (Util.is_pure_or_ghost_lcomp c)) in
                     (* if the guard is trivial, then strengthen_precondition below will not add an equality; so add it here *)
 
@@ -852,8 +852,8 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
                             cres
                     else (if Env.debug env Options.Low
                           then Util.print3 "Not refining result: f=%s; cres=%s; guard=%s\n"
-                                                  (Print.term_to_string head) 
-                                                  (Print.lcomp_to_string cres) 
+                                                  (Print.term_to_string head)
+                                                  (Print.lcomp_to_string cres)
                                                   (guard_to_string env g);
                           cres) in
                 cres, g
@@ -864,11 +864,11 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
         if debug env Options.Low then Util.print1 "\t Type of result cres is %s\n" (Print.lcomp_to_string cres);
         //Note: The outargs are in reverse order. e.g., f e1 e2 e3, we have outargs = [(e3, _, c3); (e2; _; c2); (e1; _; c2)]
         //We build bind chead (bind c1 (bind c2 (bind c3 cres)))
-        let args, comp = List.fold_left (fun (args, out_c) ((e, q), x, c) -> 
+        let args, comp = List.fold_left (fun (args, out_c) ((e, q), x, c) ->
                     match c with
                     | None -> (e, q)::args, out_c
-                    | Some c -> 
-                        let out_c = 
+                    | Some c ->
+                        let out_c =
                             TcUtil.bind e.pos env None  //proving (Some e) here instead of None causes significant Z3 overhead
                                         c (x, out_c) in
                         let e = TcUtil.maybe_lift env e c.eff_name out_c.eff_name in
@@ -877,7 +877,7 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
         let app =  mk_Tm_app head args (Some comp.res_typ.n) r in
         let app = TypeChecker.Util.maybe_monadic env app comp.eff_name in
         let comp, g = TcUtil.strengthen_precondition None env app comp guard in //Each conjunct in g is already labeled
-        app, comp, g 
+        app, comp, g
     in
 
     let rec tc_args (head_info:(term * lcomp * guard_t * lcomp)) //the head of the application, its lcomp and guard, returning a bs -> cres
@@ -898,7 +898,7 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
             tc_args head_info (subst, (arg, None, None)::outargs, arg::arg_rets, Rel.conj_guard implicits g, fvs) rest args
 
         | (x, aqual)::rest, (e, aq)::rest' -> (* a concrete argument *)
-            let _ = 
+            let _ =
                 match aqual, aq with
                 | Some (Implicit _), Some (Implicit _)
                 | None, None
@@ -949,7 +949,7 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
                         aux true (unfold_whnf env tres)
                     | _ -> raise (Error(Util.format2 "Too many arguments to function of type %s; got %s arguments"
                                             (N.term_to_string env thead) (Util.string_of_int n_args), argpos arg)) in
-            aux false chead.res_typ 
+            aux false chead.res_typ
     in //end tc_args
 
     let rec check_function_app norm tf =
@@ -988,16 +988,16 @@ and check_application_args env head chead ghead args expected_topt : term * lcom
                             (Print.term_to_string tf)
                             (Print.term_to_string bs_cres);
             Rel.force_trivial_guard env <| Rel.teq env tf bs_cres;
-            let comp = 
-                  List.fold_right (fun (r1, c) out -> 
-                       TcUtil.bind r1 env None c (None, out)) 
-                  ((head.pos, chead)::comps) 
+            let comp =
+                  List.fold_right (fun (r1, c) out ->
+                       TcUtil.bind r1 env None c (None, out))
+                  ((head.pos, chead)::comps)
                   (U.lcomp_of_comp <| cres) in
             mk_Tm_app head args (Some comp.res_typ.n) r, comp, Rel.conj_guard ghead g_args
 
         | Tm_arrow(bs, c) ->
             let bs, c = SS.open_comp bs c in
-            let head_info = head, chead, ghead, Util.lcomp_of_comp c in 
+            let head_info = head, chead, ghead, Util.lcomp_of_comp c in
             tc_args head_info ([], [], [], Rel.trivial_guard, []) bs args
 
         | _ ->
@@ -2098,7 +2098,7 @@ let tc_eff_decl env0 (ed:Syntax.eff_decl) is_for_free =
   let bind_wp =
     let b, wp_b = get_effect_signature () in
     let a_wp_b = Util.arrow [S.null_binder (S.bv_to_name a)] (S.mk_Total wp_b) in
-    let expected_k = Util.arrow [S.null_binder t_range; 
+    let expected_k = Util.arrow [S.null_binder t_range;
                                  S.mk_binder a; S.mk_binder b;
                                  S.null_binder wp_a;
                                  S.null_binder a_wp_b]
@@ -2325,7 +2325,7 @@ let tc_inductive env ses quals lids =
          let tps, env_tps, guard_params, us = tc_binders env tps in
          let indices, t = Util.arrow_formals k in
          let indices, env', guard_indices, us' = tc_binders env_tps indices in
-         let t, guard = 
+         let t, guard =
              let t, _, g = tc_tot_or_gtot_term env' t in
              t, Rel.discharge_guard env' (Rel.conj_guard guard_params (Rel.conj_guard guard_indices g)) in
          let k = Util.arrow indices (S.mk_Total t) in
@@ -2338,7 +2338,7 @@ let tc_inductive env ses quals lids =
          let fv_tc = S.lid_as_fv tc Delta_constant None in
          Env.push_let_binding env_tps (Inr fv_tc) ([], t_tc),
          Sig_inductive_typ(tc, [], tps, k, mutuals, data, quals, r),
-         u, 
+         u,
          guard
 
         | _ -> failwith "impossible" in
@@ -2388,7 +2388,7 @@ let tc_inductive env ses quals lids =
          let head, _ = Util.head_and_args result in
          let _ = match (SS.compress head).n with
             | Tm_fvar fv when S.fv_eq_lid fv tc_lid -> ()
-            | _ -> raise (Error(Util.format2 "Expected a constructor of type %s; got %s" 
+            | _ -> raise (Error(Util.format2 "Expected a constructor of type %s; got %s"
                                         (Print.lid_to_string tc_lid)
                                         (Print.term_to_string head), r)) in
          let g =List.fold_left2 (fun g (x, _) u_x ->
@@ -2455,7 +2455,7 @@ let tc_inductive env ses quals lids =
 
     let tys, datas = ses |> List.partition (function Sig_inductive_typ _ -> true | _ -> false) in
     if datas |> Util.for_some (function Sig_datacon _ -> false | _ -> true)
-    then raise (Error("Mutually defined type contains a non-inductive element", Env.get_range env)); 
+    then raise (Error("Mutually defined type contains a non-inductive element", Env.get_range env));
     let env0 = env in
 
     (* Check each tycon *)
@@ -2502,7 +2502,7 @@ let tc_inductive env ses quals lids =
                 | Sig_inductive_typ (lid, _, bs, t, _, d_lids, _, _) -> lid, bs, t, d_lids
                 | _                                                  -> failwith "Impossible!"
         in
- 
+
          //apply usubt to bs
         let bs = SS.subst_binders usubst bs in
         //apply usubst to t, but first shift usubst -- is there a way to apply usubst to bs and t together ?
@@ -2588,7 +2588,7 @@ let tc_inductive env ses quals lids =
                     let dbs = SS.open_binders dbs in
                     //fold on dbs, add haseq of its sort to the guard
                     let cond = List.fold_left (fun (t:term) (b:binder) -> U.mk_conj t (mk_Tm_app U.t_haseq [S.as_arg (fst b).sort] None dr)) U.t_true dbs in
-                    
+
                     let env, cond' = acc in
                     Env.push_binders env dbs, U.mk_conj cond' cond
                 | _                -> acc
@@ -2620,9 +2620,9 @@ let tc_inductive env ses quals lids =
         env.solver.push "haseq";
         env.solver.encode_sig env sig_bndle;
         let env = Env.push_univ_vars env us in
-	
+
         let axioms, env, guard, cond = List.fold_left (haseq_ty usubst us) ([], env, U.t_true, U.t_true) tcs in
-            
+
         let phi = U.mk_imp guard cond in
         let phi, _ = tc_trivial_guard env phi in
         let _ =
@@ -2640,7 +2640,7 @@ let tc_inductive env ses quals lids =
         let ses = List.fold_left (fun (l:list<sigelt>) (lid, fml) ->
             let se = tc_assume env lid fml [] dr in
             //se has free universe variables in it, TODO: fix it by making Sig_assume a type scheme
-            l @ [se] 
+            l @ [se]
         ) [] axioms in
         //TODO: adding Sig_assumes to the sig_bundle is breaking invariant that the sig_bundle only contains tycons and datacons, fix it
         (Sig_bundle(tcs@datas, quals, lids, Env.get_range env0))::ses
@@ -2679,7 +2679,7 @@ let rec tc_decl env se = match se with
                 set_options Options.Set o;
                 [se], env
             | ResetOptions sopt ->
-                Options.restore_cmd_line_options false |> ignore;
+                Options.restore_cmd_line_options false true;
                 let _ = match sopt with
                     | None -> ()
                     | Some s -> set_options Options.Reset s in
@@ -2926,13 +2926,13 @@ let tc_decls env ses =
   List.rev_append ses [], (List.rev_append exports []) |> List.flatten, env
 
 let tc_partial_modul env modul =
-  let name = Util.format2 "%s %s"  (if modul.is_interface then "interface" else "module") modul.name.str in
-  let msg = "Internals for " ^name in
+  let name = (if modul.is_interface then "interface" else "module") ^ modul.name.str in
+  let msg = "Internals for " ^ name in
   let env = {env with Env.is_iface=modul.is_interface; admit=not (Options.should_verify modul.name.str)} in
   if not (lid_equals modul.name Const.prims_lid) then env.solver.push msg;
   let env = Env.set_current_module env modul.name in
   let ses, exports, env = tc_decls env modul.declarations in
-  {modul with declarations=ses}, exports, env
+  {modul with declarations = ses}, exports, env
 
 let tc_more_partial_modul env modul decls =
   let ses, exports, env = tc_decls env decls in
@@ -2940,14 +2940,14 @@ let tc_more_partial_modul env modul decls =
   modul, exports, env
 
 let finish_partial_modul env modul exports =
-  let modul = {modul with exports=exports; is_interface=modul.is_interface} in
+  let modul = {modul with exports = exports; is_interface = modul.is_interface} in
   let env = Env.finish_module env modul in
   if not (lid_equals modul.name Const.prims_lid)
   then begin
     env.solver.pop ("Ending modul " ^ modul.name.str);
     env.solver.encode_modul env modul;
     env.solver.refresh();
-    Options.restore_cmd_line_options true |> ignore
+    Options.restore_cmd_line_options true true
   end;
   modul, env
 
@@ -2970,6 +2970,6 @@ let check_module env m =
     if Options.debug_any()
     then Util.print2 "Checking %s: %s\n" (if m.is_interface then "i'face" else "module") (Print.lid_to_string m.name);
     let m, env = tc_modul env m in
-    if Options.dump_module m.name.str 
+    if Options.dump_module m.name.str
     then Util.print1 "%s\n" (Print.modul_to_string m);
     m, env

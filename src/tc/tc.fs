@@ -271,8 +271,8 @@ and tc_args env args : Syntax.args * guard_t =
         let e, _, g' = tc_ghost_exp env e in
         (Inr e, imp)::args, Tc.Rel.conj_guard g g') args ([], Rel.trivial_guard)
 
-and tc_pats env pats = 
-    List.fold_right (fun p (pats, g) -> let args, g' = tc_args env p in (args::pats, Tc.Rel.conj_guard g g')) pats ([], Rel.trivial_guard) 
+and tc_pats env pats =
+    List.fold_right (fun p (pats, g) -> let args, g' = tc_args env p in (args::pats, Tc.Rel.conj_guard g g')) pats ([], Rel.trivial_guard)
 
 and tc_comp env c =
   match c.n with
@@ -342,14 +342,14 @@ and tc_typ env (t:typ) : typ * knd * guard_t =
             then begin
             match cod.n with
             | Comp ({effect_args=[(Inl pre, _); (Inl post, _); (Inr pats, _)]}) ->
-              let rec extract_pats pats = match (Util.compress_exp pats).n with 
-                | Exp_app({n=Exp_fvar (cons, _)}, [_; (Inr hd, _); (Inr tl, _)]) when lid_equals cons.v Const.cons_lid -> 
+              let rec extract_pats pats = match (Util.compress_exp pats).n with
+                | Exp_app({n=Exp_fvar (cons, _)}, [_; (Inr hd, _); (Inr tl, _)]) when lid_equals cons.v Const.cons_lid ->
                   let head, args = Util.head_and_args_e hd in
-                  let pat = match args with 
+                  let pat = match args with
                     | [_; arg]
                     | [arg] -> [arg]
                     | _ -> [] in
-                  pat@extract_pats tl 
+                  pat@extract_pats tl
                 | _ -> [] in
               let pats = extract_pats (Normalize.norm_exp [Normalize.Beta] env pats) in
               let fvs = Util.freevars_args pats in
@@ -842,7 +842,7 @@ and tc_exp env e : exp * lcomp * guard_t =
     let e, c, f2 = comp_check_expected_typ env (w c <| mk_Exp_ascribed(e1, t1, Some c.eff_name)) c in
     e, c, Rel.conj_guard f (Rel.conj_guard g f2)
 
-  | Exp_meta(Meta_desugared(e, Meta_smt_pat)) -> 
+  | Exp_meta(Meta_desugared(e, Meta_smt_pat)) ->
     let pats_t = mk_Typ_app(Util.ftv Const.list_lid (Const.kunary mk_Kind_type mk_Kind_type), [targ (Util.ftv Const.pattern_lid mk_Kind_type)]) None dummyRange in
     let e, t, g = tc_ghost_exp (Env.set_expected_typ env pats_t) e in
     let g = {g with guard_f=Trivial} in //VC's in SMT patterns are irrelevant
@@ -1173,7 +1173,7 @@ and tc_exp env e : exp * lcomp * guard_t =
         //NS: This used to be an optimization, but it isn't quite right
         //Consider what happens in
         //  val test: bool -> Tot bool
-        //  let rec test x = test2 false 
+        //  let rec test x = test2 false
         //  and test2 (x:bool) : bool = false
         //here, env.generalize is false, but the type of test2 has not yet been checked
 //UNSOUND OPTIMIZATION REMOVED
@@ -1334,7 +1334,7 @@ and tc_eqn (scrutinee_x:bvvdef) pat_t env (pattern, when_clause, branch) : (pat 
                 | Inr ei ->
                     let projector = Tc.Env.lookup_projector env f.v i in //NS: TODO ... should this be a marked as a record projector?
                     if not <| Tc.Env.is_projector env projector //the projector may not exist, if it is inaccessible
-                    then [] 
+                    then []
                     else let sub_term = mk_Exp_app(Util.fvar None projector f.p, [varg scrutinee]) None f.p in
                          [mk_guard sub_term ei]) |> List.flatten in
             Util.mk_conj_l (head::sub_term_guards)
@@ -1514,8 +1514,8 @@ and tc_decl env se deserialized = match se with
                 set_options Options.Set o;
                 se, env
             | ResetOptions sopt ->
-                Options.restore_cmd_line_options false |> ignore;
-                let _ = match sopt with 
+                Options.restore_cmd_line_options false true;
+                let _ = match sopt with
                     | None -> ()
                     | Some s -> set_options Options.Reset s in
                 env.solver.refresh();
@@ -1601,8 +1601,8 @@ and tc_decl env se deserialized = match se with
         | Some (formals, cod) -> formals, Util.comp_result cod
         | _ -> [], t in
 
-      let cardinality_and_positivity_check (formal:binder) = 
-        let check_positivity formals = 
+      let cardinality_and_positivity_check (formal:binder) =
+        let check_positivity formals =
             formals |> List.iter (fun (a, _) -> match a with
                 | Inl _ -> ()
                 | Inr y ->
@@ -1617,16 +1617,16 @@ and tc_decl env se deserialized = match se with
                         end
                     | _ -> ()) () t) in
         match fst formal with
-        | Inl a -> 
-          begin 
+        | Inl a ->
+          begin
               if (Options.warn_cardinality())
               then Tc.Errors.warn r (Tc.Errors.cardinality_constraint_violated lid a)
               else if (Options.check_cardinality())
               then raise (Error(Tc.Errors.cardinality_constraint_violated lid a, r))
           end;
           let k = Normalize.norm_kind [Normalize.Beta; Normalize.DeltaHard] env a.sort in
-          begin match k.n with 
-            | Kind_arrow _ -> 
+          begin match k.n with
+            | Kind_arrow _ ->
               let formals, _ = Util.kind_formals k in
               check_positivity formals
             | _ -> ()
@@ -1643,15 +1643,15 @@ and tc_decl env se deserialized = match se with
       let _ = match destruct result_t tname with
         | Some args ->
           if not (List.length args >= List.length tps
-               && List.forall2 (fun (a, _) (b, _) -> match a, b with 
+               && List.forall2 (fun (a, _) (b, _) -> match a, b with
                              | Inl ({n=Typ_btvar aa}), Inl bb -> Util.bvar_eq aa bb
                              | Inr ({n=Exp_bvar xx}), Inr yy -> Util.bvar_eq xx yy
                              | _ -> false) (Util.first_N (List.length tps) args |> fst) tps)
-          then let expected_t = match tps with 
+          then let expected_t = match tps with
                 | [] -> Util.ftv tname kun
-                | _ -> 
+                | _ ->
                   let _, expected_args = Util.args_of_binders tps in
-                  Util.mk_typ_app (Util.ftv tname kun) expected_args in 
+                  Util.mk_typ_app (Util.ftv tname kun) expected_args in
                raise (Error (Tc.Errors.constructor_builds_the_wrong_type env (Util.fvar (Some Data_ctor) lid (range_of_lid lid)) result_t expected_t, range_of_lid lid))
         | _ -> raise (Error (Tc.Errors.constructor_builds_the_wrong_type env (Util.fvar (Some Data_ctor) lid (range_of_lid lid)) result_t (Util.ftv tname kun), range_of_lid lid)) in
       let se = Sig_datacon(lid, t, tycon, quals, mutuals, r) in
@@ -1764,11 +1764,11 @@ and tc_decl env se deserialized = match se with
       se, env
 
 and tc_decls env ses deserialized =
- let time_tc_decl env se ds = 
+ let time_tc_decl env se ds =
     let start = FStar.Util.now() in
     let res = tc_decl env se ds in
-    let stop = FStar.Util.now () in 
-    let diff, _ = FStar.Util.time_diff start stop in 
+    let stop = FStar.Util.now () in
+    let diff, _ = FStar.Util.time_diff start stop in
     Util.print2 "Time %ss : %s\n" (Util.string_of_float diff) (Print.sigelt_to_string_short se);
     res in
 
@@ -1793,10 +1793,10 @@ let rec for_export env hidden se : list<sigelt> * list<lident> =
            i.e., if a module A marks symbol x as private, then a module B simply cannot refer to A.x
            OTOH, if A marks x as abstract, B can refer to A.x, but cannot see its definition.
 
-      Here, if a symbol is abstract, we only export its declaration, not its definition. 
+      Here, if a symbol is abstract, we only export its declaration, not its definition.
       The reason we export the declaration of private symbols is to account for cases like this:
 
-        module A 
+        module A
            abstract let x = 0
            let y = x
 
@@ -1809,19 +1809,19 @@ let rec for_export env hidden se : list<sigelt> * list<lident> =
             let y = x
     *)
    let is_abstract quals = quals |> Util.for_some (function Abstract -> true | _ -> false) in
-   let is_hidden_proj_or_disc q = match q with 
-        | Projector(l, _) 
-        | Discriminator l -> hidden |> Util.for_some (lid_equals l) 
+   let is_hidden_proj_or_disc q = match q with
+        | Projector(l, _)
+        | Discriminator l -> hidden |> Util.for_some (lid_equals l)
         | _ -> false in
 
    match se with
     | Sig_pragma         _ -> [], hidden
     | Sig_datacon _ -> failwith "Impossible"
 
-    | Sig_kind_abbrev _ 
+    | Sig_kind_abbrev _
     | Sig_tycon _ -> [se], hidden
- 
-    | Sig_typ_abbrev(lid, binders, knd, def, quals, r) -> 
+
+    | Sig_typ_abbrev(lid, binders, knd, def, quals, r) ->
       if is_abstract quals
       then let se = Sig_tycon(lid, binders, knd, [], [], Assumption::quals, r) in
            [se], hidden
@@ -1829,15 +1829,15 @@ let rec for_export env hidden se : list<sigelt> * list<lident> =
 
     | Sig_bundle(ses, quals, _, _) ->
       if is_abstract quals
-      then List.fold_right (fun se (out, hidden) -> match se with 
-            | Sig_tycon(l, bs, t, _, _, quals, r) -> 
+      then List.fold_right (fun se (out, hidden) -> match se with
+            | Sig_tycon(l, bs, t, _, _, quals, r) ->
               let dec = Sig_tycon(l, bs, t, [], [], quals, r) in
               dec::out, hidden
             | Sig_datacon(l, t, _tc, quals, _mutuals, r) -> //logically, each constructor just becomes an uninterpreted function
               let t = Env.lookup_datacon env l in
               let dec = Sig_val_decl(l, t, [Assumption], r) in
               dec::out, l::hidden
-            | se -> for_export env hidden se) 
+            | se -> for_export env hidden se)
             ses ([], hidden)
       else [se], hidden
 
@@ -1846,10 +1846,10 @@ let rec for_export env hidden se : list<sigelt> * list<lident> =
       then [], hidden
       else [se], hidden
 
-    | Sig_val_decl(l, t, quals, r) -> 
+    | Sig_val_decl(l, t, quals, r) ->
       if quals |> Util.for_some is_hidden_proj_or_disc //hidden projectors/discriminators become uninterpreted
       then [Sig_val_decl(l, t, [Assumption], r)], l::hidden
-      else if quals |> Util.for_some (function 
+      else if quals |> Util.for_some (function
         | Assumption
         | Projector _
         | Discriminator _ -> true
@@ -1864,24 +1864,24 @@ let rec for_export env hidden se : list<sigelt> * list<lident> =
     | Sig_sub_effect     _
     | Sig_effect_abbrev  _ -> [se], hidden
 
-    | Sig_let((false, [lb]), _, _, quals) when (quals |> Util.for_some is_hidden_proj_or_disc) -> 
+    | Sig_let((false, [lb]), _, _, quals) when (quals |> Util.for_some is_hidden_proj_or_disc) ->
       let lid = right lb.lbname in
       if hidden |> Util.for_some (lid_equals lid)
       then [], hidden //this projector definition already has a declare_typ
       else let dec = Sig_val_decl(lid, lb.lbtyp, [Assumption], Ident.range_of_lid lid) in
            [dec], lid::hidden
-  
+
     | Sig_let(lbs, r, l, quals) ->
       if is_abstract quals
-      then snd lbs |> List.map (fun lb -> 
+      then snd lbs |> List.map (fun lb ->
            Sig_val_decl(right lb.lbname, lb.lbtyp, Assumption::quals, r)), hidden
       else [se], hidden
 
 let get_exports env modul =
-    let exports, _ = modul.declarations |> List.fold_left (fun (exports, hidden) se -> 
+    let exports, _ = modul.declarations |> List.fold_left (fun (exports, hidden) se ->
             let exports', hidden = for_export env hidden se in
             exports'::exports, hidden) ([], []) in
-    List.rev exports |> List.flatten 
+    List.rev exports |> List.flatten
 
 let tc_partial_modul env modul =
   let name = Util.format2 "%s %s"  (if modul.is_interface then "interface" else "module") modul.name.str in
@@ -1906,7 +1906,7 @@ let finish_partial_modul env modul =
     env.solver.pop ("Ending modul " ^ modul.name.str);
     env.solver.encode_modul env modul;
     env.solver.refresh();
-    Options.restore_cmd_line_options true |> ignore
+    Options.restore_cmd_line_options true true
   end;
   modul, env
 

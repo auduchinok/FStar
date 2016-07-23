@@ -41,15 +41,13 @@ let module_or_interface_name m = m.is_interface, m.name
 (***********************************************************************)
 (* Parse and desugar a file                                            *)
 (***********************************************************************)
-let parse (env:DsEnv.env) (pre_fn: option<string>) (fn:string)
-  : DsEnv.env
-  * list<Syntax.modul> =
-  let ast = Parser.Driver.parse_file fn in
+let parse (env:DsEnv.env) (pre_fn: option<string>) filename : DsEnv.env * list<Syntax.modul> =
+  let ast = Parser.Driver.parse filename in
   let ast = match pre_fn with
     | None ->
         ast
     | Some pre_fn ->
-        let pre_ast = Parser.Driver.parse_file pre_fn in
+        let pre_ast = Parser.Driver.parse pre_fn in
         match pre_ast, ast with
         | [ Parser.AST.Interface (lid1, decls1, _) ], [ Parser.AST.Module (lid2, decls2) ]
           when Ident.lid_equals lid1 lid2 ->
@@ -63,9 +61,7 @@ let parse (env:DsEnv.env) (pre_fn: option<string>) (fn:string)
 (***********************************************************************)
 (* Checking Prims.fst                                                  *)
 (***********************************************************************)
-let tc_prims () : Syntax.modul
-                  * DsEnv.env
-                  * TcEnv.env =
+let tc_prims () : Syntax.modul * DsEnv.env * TcEnv.env =
   let solver = if Options.lax() then SMT.dummy else SMT.solver in
   let env = TcEnv.initial_env Tc.type_of solver Const.prims_lid in
   env.solver.init env;

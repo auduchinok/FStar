@@ -34,25 +34,26 @@ let rec parse (opts:list<opt>) def ar ix max i =
   if ix > max then Success
   else
     let arg = ar.(ix) in
-    let go_on () = let _ = def arg in parse opts def ar (ix + 1) max (i + 1) in
-      if String.length arg < 2 then
-        go_on ()
+    let go_on () =
+        def arg |> ignore;
+        parse opts def ar (ix + 1) max (i + 1) in
+    if String.length arg < 2 then go_on ()
       else
-        let hd = String.sub arg 0 2 in
-          if hd = "--" then
-            let argtrim = String.sub arg 2 ((String.length arg) - 2) in
-              match List.tryFind (fun (_, option, _, _) -> option = argtrim) opts with
+        let prefix = String.sub arg 0 2 in
+          if prefix = "--" then
+            let trimmed_arg = String.sub arg 2 ((String.length arg) - 2) in
+              match List.tryFind (fun (_, option, _, _) -> option = trimmed_arg) opts with
                 | Some (_, _, p, _) ->
                     (match p with
                        | ZeroArgs f -> f (); parse opts def ar (ix + 1) max (i + 1)
                        | OneArg (f, _) ->
-                           if ix + 1 > max then Error ("last option '" + argtrim + "' takes an argument but has none\n")
+                           if ix + 1 > max then Error ("last option '" + trimmed_arg + "' takes an argument but has none\n")
                            else
                              try
                                f (ar.(ix + 1));
                                parse opts def ar (ix + 2) max (i + 1)
                              with _ ->
-                                  Error ("wrong argument given to option '" + argtrim + "'\n"))
+                                  Error ("wrong argument given to option '" + trimmed_arg + "'\n"))
                 | None -> Error ("unrecognized option '" + arg + "'\n")
           else go_on ()
 

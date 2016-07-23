@@ -29,20 +29,20 @@ type debug_level_t =
   | Other of string
 
 type option_val =
-  | Bool of bool 
+  | Bool of bool
   | String of string
   | Int of int
   | List of list<option_val>
   | Unset
 
-type options = 
+type options =
     | Set
     | Reset
     | Restore
 
 val init                        : unit    -> unit  //sets the current options to their defaults
 val clear                       : unit    -> unit  //wipes the stack of options, and then inits
-val restore_cmd_line_options    : bool    -> parse_cmdline_res //inits or clears (if the flag is set) the current options and then sets it to the cmd line
+val restore_cmd_line_options    : bool    -> bool -> unit //inits or clears (if the flag is set) the current options and then sets it to the cmd line
 
 val __unit_tests                : unit    -> bool
 val __set_unit_tests            : unit    -> unit

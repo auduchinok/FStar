@@ -22,8 +22,8 @@ open FStar.Getopt
 open FStar.Ident
 open FStar.Interactive
 
-(* cleanup: kills background Z3 processes; relevant when --n_cores > 1 *)
-let cleanup = Util.kill_all
+(* cleanup: kills background Z3 processes; relevant when --n_cores > 1; restore comand line args *)
+let cleanup () = Util.kill_all () //Options.clear(); Options.init (); Options.parse_cmd_line () |> ignore
 
 (* printing total error count *)
 let report_errors () =
@@ -86,7 +86,7 @@ let batch_check filenames =
             | _, _     -> Parser.Dep.VerifyUserList in
 
           if Options.universes () then
-            let fmods, dsenv, env = Universal.batch_mode_tc verify_mode filenames in
+            let fmods, _, env = Universal.batch_mode_tc verify_mode filenames in
             report_errors ();
             codegen (Inr (fmods, env));
             finished_message (fmods |> List.map Universal.module_or_interface_name);

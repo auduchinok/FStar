@@ -63,13 +63,13 @@ let parse_fragment frag : fragment =
       else raise (Absyn.Syntax.Error(msg, r))
 
 (* Returns a non-desugared AST (as in [parser/ast.fs]) or aborts. *)
-let parse_file fn =
-  match ParseIt.parse (Inl fn) with
+let parse filename =
+  match ParseIt.parse (Inl filename) with
   | Inl (Inl ast) ->
     ast
 
   | Inl (Inr _) ->
-    let msg = Util.format1 "%s: expected a module\n" fn in
+    let msg = Util.format1 "%s: expected a module\n" filename in
     let r = Range.dummyRange in
     if (Options.universes())
     then raise (FStar.Syntax.Syntax.Error(msg, r))

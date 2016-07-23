@@ -46,7 +46,7 @@ let check_extension fn =
     if not (Util.ends_with fn ".fst")
     && not (Util.ends_with fn ".fsti")
     then raise (FStar.Syntax.Syntax.Err("Unrecognized file extension: " ^fn))
-          
+
 let parse fn =
   Parser.Util.warningHandler := (function
     | Lexhelp.ReservedKeyword(m,s) -> Printf.printf "%s:%s" (Range.string_of_range s) m
@@ -55,18 +55,18 @@ let parse fn =
   Parser.Util.errorHandler := (function
     | e -> raise e);
 
-  let filename,sr,fs = match fn with
+  let filename, reader, contents = match fn with
     | Inl (filename:string) ->
         check_extension filename;
         let filename' = find_file filename in
-        let contents = read_file filename' in
-        filename', new System.IO.StringReader(contents) :> System.IO.TextReader, contents
+        let contents' = read_file filename' in
+        filename', new System.IO.StringReader(contents') :> System.IO.TextReader, contents'
     | Inr (s:string) -> "<input>", new System.IO.StringReader(s) :> System.IO.TextReader, s  in
 
-  let lexbuf = Microsoft.FSharp.Text.Lexing.LexBuffer<char>.FromTextReader(sr) in
+  let lexbuf = Microsoft.FSharp.Text.Lexing.LexBuffer<char>.FromTextReader(reader) in
   resetLexbufPos filename lexbuf;
   try
-      let lexargs = Lexhelp.mkLexargs ((fun () -> "."), filename,fs) in
+      let lexargs = Lexhelp.mkLexargs ((fun () -> "."), filename,contents) in
       let lexer = LexFStar.token lexargs in
       let fileOrFragment = Parse.inputFragment lexer lexbuf in
       let frags = match fileOrFragment with
@@ -84,10 +84,10 @@ let parse fn =
     | Syntax.Syntax.Error(msg, r) ->
       Inr (msg, r)
     | e ->
-      let p0 = 
+      let p0 =
         let p = lexbuf.StartPos in
         Range.mk_pos p.pos_lnum (p.pos_cnum - p.pos_bol + 1) in
-      let p1 = 
+      let p1 =
         let p = lexbuf.EndPos in
         Range.mk_pos p.pos_lnum (p.pos_cnum - p.pos_bol + 1) in
       let r = Range.mk_range filename p0 p1 in
