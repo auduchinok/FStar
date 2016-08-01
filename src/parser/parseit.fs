@@ -46,7 +46,12 @@ let check_extension fn =
     if not (Util.ends_with fn ".fst")
     && not (Util.ends_with fn ".fsti")
     then raise (FStar.Syntax.Syntax.Err("Unrecognized file extension: " ^fn))
-          
+
+let rec get_tokens lexer lexbuf =
+    match lexer lexbuf with
+    | Parse.EOF -> [Parse.EOF]
+    | token -> token :: get_tokens lexer lexbuf
+
 let parse fn =
   Parser.Util.warningHandler := (function
     | e -> Printf.printf "Warning: %A\n" e);
@@ -85,10 +90,10 @@ let parse fn =
     | Syntax.Syntax.Error(msg, r) ->
       Inr (msg, r)
     | e ->
-      let p0 = 
+      let p0 =
         let p = lexbuf.StartPos in
         Range.mk_pos p.pos_lnum (p.pos_cnum - p.pos_bol + 1) in
-      let p1 = 
+      let p1 =
         let p = lexbuf.EndPos in
         Range.mk_pos p.pos_lnum (p.pos_cnum - p.pos_bol + 1) in
       let r = Range.mk_range filename p0 p1 in

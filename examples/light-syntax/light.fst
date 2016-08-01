@@ -1,4 +1,4 @@
-module Lex
+module Light
 
 let f a =
   let x = 1
