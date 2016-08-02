@@ -96,6 +96,7 @@
     <Compile Include="driver.fs" />
     <Content Include="packages.config" />
     <Compile Include="dep.fs" />
+    <Compile Include="Test.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\syntax\syntax.fsproj">
