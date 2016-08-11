@@ -26,7 +26,7 @@
     </DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
     <OtherFlags>--mlcompatibility</OtherFlags>
-    <StartArguments>..\examples\light-syntax\light.fst</StartArguments>
+    <StartArguments>..\examples\light-syntax\Foo.fst</StartArguments>
     <StartAction>Project</StartAction>
     <StartWorkingDirectory>
     </StartWorkingDirectory>
