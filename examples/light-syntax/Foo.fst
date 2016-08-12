@@ -1,4 +1,4 @@
 module Foo
 
-let main () =
-  if true then ()
+let main () =(
+  if (true || true) then ())

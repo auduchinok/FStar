@@ -118,40 +118,6 @@ let as_frag d ds =
 %token<string>  OPPREFIX OPINFIX0a OPINFIX0b OPINFIX0c OPINFIX0d OPINFIX1 OPINFIX2 OPINFIX3 OPINFIX4
 
 /* for offside rule, copied from F# */
-%token <bool> OLET      /* LexFilter #light converts 'LET' tokens to 'OLET' when starting (CtxtLetDecl(blockLet=true)) */
-%token OTHEN            /* LexFilter #light converts 'THEN' tokens to 'OTHEN' */
-%token OELSE            /* LexFilter #light converts 'ELSE' tokens to 'OELSE' except if immeditely followed by 'if', when they become 'ELIF' */
-%token OWITH            /* LexFilter #light converts SOME (but not all) 'WITH' tokens to 'OWITH' */
-%token OFUNCTION        /* LexFilter #light converts 'FUNCTION' tokens to 'OFUNCTION' */
-%token OFUN             /* LexFilter #light converts 'FUN' tokens to 'OFUN' */
-
-%token OBLOCKBEGIN      /* LexFilter #light inserts for:
-                                  - just after first '=' or ':' when in 'CtxtModuleHead', i.e. after 'module' and sequence of dot/identifier/access tokens
-                                  - just after first '=' when in 'CtxtMemberHead'
-                                  - just after first '=' when in 'CtxtType'
-                                  - just after 'do' in any context (when opening CtxtDo)
-                                  - just after 'finally' in any context
-                                  - just after 'with' (when opening CtxtWithAsAugment)
-                                  - just after 'else' (when opening CtxtElse)
-                                  - just after 'then' (when opening CtxtThen)
-                                  - just after 'interface' (when pushing CtxtParen(INTERFACE), i.e. next token is DEFAULT | OVERRIDE | INTERFACE | NEW | TYPE | STATIC | END | MEMBER | ABSTRACT  | INHERIT | LBRACK_LESS)
-                                  - just after 'class' (when pushing CtxtParen(CLASS)
-                                  - just after 'class'
-                           But not when opening these CtxtSeqBlocks:
-                                  - just after first non-dot/identifier token past 'namespace'
-                                  - just after first '=' when in 'CtxtLetDecl' or 'CtxtWithAsLet'
-                                  - just after 'lazy' in any context
-                                  - just after '->' in any context
-                                  - when opening CtxtNamespaceHead, CtxtModuleHead
-                        */
-%token OBLOCKSEP        /* LexFilter #light inserts when transforming CtxtSeqBlock(NotFirstInSeqBlock,_,AddBlockEnd) to CtxtSeqBlock(FirstInSeqBlock,_,AddBlockEnd) on exact alignment */
-
-/*    REVIEW: merge OEND, ODECLEND, OBLOCKEND and ORIGHT_BLOCK_END into one token */
-%token OEND             /* LexFilter #light inserts when closing CtxtFun, CtxtMatchClauses, CtxtWithAsLet _        */
-%token ODECLEND         /* LexFilter #light inserts when closing CtxtDo and CtxtLetDecl(block) */
-%token ORIGHT_BLOCK_END /* LexFilter #light inserts when closing CtxtSeqBlock(_,_,AddOneSidedBlockEnd) */
-%token OBLOCKEND OBLOCKEND_COMING_SOON OBLOCKEND_IS_HERE       /* LexFilter #light inserts when closing CtxtSeqBlock(_,_,AddBlockEnd) */
-
 %token <token> ODUMMY
 
 /* These are artificial */

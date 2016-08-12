@@ -3,24 +3,6 @@ module FStar.Parser.Parse
 type token = 
   | EOF
   | ODUMMY of (token)
-  | OINTERFACE_MEMBER
-  | OBLOCKEND
-  | OBLOCKEND_COMING_SOON
-  | OBLOCKEND_IS_HERE
-  | ORIGHT_BLOCK_END
-  | ODECLEND
-  | OEND
-  | OBLOCKSEP
-  | OBLOCKBEGIN
-  | ORESET
-  | OFUN
-  | OFUNCTION
-  | OWITH
-  | OELSE
-  | OTHEN
-  | ODO
-  | OBINDER of (string)
-  | OLET of (bool)
   | OPPREFIX of (string)
   | OPINFIX0a of (string)
   | OPINFIX0b of (string)
@@ -147,24 +129,6 @@ type token =
 type tokenId = 
     | TOKEN_EOF
     | TOKEN_ODUMMY
-    | TOKEN_OINTERFACE_MEMBER
-    | TOKEN_OBLOCKEND
-    | TOKEN_OBLOCKEND_COMING_SOON
-    | TOKEN_OBLOCKEND_IS_HERE
-    | TOKEN_ORIGHT_BLOCK_END
-    | TOKEN_ODECLEND
-    | TOKEN_OEND
-    | TOKEN_OBLOCKSEP
-    | TOKEN_OBLOCKBEGIN
-    | TOKEN_ORESET
-    | TOKEN_OFUN
-    | TOKEN_OFUNCTION
-    | TOKEN_OWITH
-    | TOKEN_OELSE
-    | TOKEN_OTHEN
-    | TOKEN_ODO
-    | TOKEN_OBINDER
-    | TOKEN_OLET
     | TOKEN_OPPREFIX
     | TOKEN_OPINFIX0a
     | TOKEN_OPINFIX0b
